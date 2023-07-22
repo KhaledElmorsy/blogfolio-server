@@ -1,7 +1,6 @@
 {
-  "name": "blogfolio-backend",
+  "name": "@blogfolio/server",
   "version": "1.0.0",
-  "main": "index.js",
   "repository": "git@github.com:KhaledElmorsy/blogfolio-backend.git",
   "author": "Khaled Elmorsy <96543794+kha-ld@users.noreply.github.com>",
   "license": "MIT",
