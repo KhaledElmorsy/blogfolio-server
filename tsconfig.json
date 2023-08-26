@@ -1,17 +1,19 @@
 {
   "compilerOptions": {
     /* Language and Environment */
-    "target": "ES6",
+    "target": "ESNext",
 
     /* Modules */
-    "module": "NodeNext",
-    "moduleResolution": "Node",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@@/*": ["./*"],
+      "@@TestEnv/*": ["test-utils/setup/*"]
     },
 
     /* Emit */

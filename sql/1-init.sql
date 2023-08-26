@@ -30,7 +30,7 @@ CREATE FUNCTION updateEditTime() RETURNS TRIGGER AS $$
 CREATE TYPE role AS ENUM ('user', 'admin');
 
 CREATE TABLE users (
-	user_id BIGSERIAL PRIMARY KEY,
+	user_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	user_uid TEXT NOT NULL UNIQUE,
 	username TEXT NOT NULL UNIQUE,
 	email TEXT NOT NULL UNIQUE,
@@ -44,7 +44,11 @@ CREATE TABLE users (
 	active BOOLEAN DEFAULT FALSE,
 	created_at TIMESTAMPTZ DEFAULT now()
 );
-CREATE INDEX user_uid_index ON users (user_uid);
+CREATE INDEX user_uid ON users (user_uid);
+CREATE INDEX user_email ON users (email);
+CREATE INDEX user_username ON users (username);
+CREATE INDEX user_first_name ON users (first_name);
+CREATE INDEX user_last_name ON users (last_name);
 
 CREATE TABLE user_follows (
 	user_id BIGINT REFERENCES users ON DELETE CASCADE,
@@ -52,6 +56,7 @@ CREATE TABLE user_follows (
 	created_at TIMESTAMPTZ DEFAULT now(),
 	PRIMARY KEY (user_id, follower_id)
 );
+CREATE INDEX user_follows_follower_id ON user_follows (follower_id);
 
 -- --------------------------------------------------------------- --
 --	                           NODES                               --
@@ -84,7 +89,7 @@ BEGIN
 END $$ LANGUAGE 'plpgsql';
 
 CREATE TABLE nodes (
-	node_id BIGSERIAL NOT NULL PRIMARY KEY,
+	node_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	parent_node_id BIGINT REFERENCES nodes ON DELETE CASCADE,
 	node_ref node_ref
 );
@@ -93,7 +98,7 @@ CREATE INDEX node_ref ON nodes (node_ref);
 
 CREATE TABLE posts (
 	node_id BIGINT UNIQUE REFERENCES nodes ON DELETE CASCADE,
-	post_id BIGSERIAL PRIMARY KEY,
+	post_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	post_uid TEXT NOT NULL UNIQUE,
 	post_slug TEXT,
 	user_id INT NOT NULL REFERENCES users ON DELETE CASCADE,
@@ -155,7 +160,7 @@ CREATE TABLE post_user_views (
 	
 CREATE TABLE comments (
 	node_id BIGINT UNIQUE REFERENCES nodes ON DELETE CASCADE,
-	comment_id BIGSERIAL PRIMARY KEY,
+	comment_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	comment_uid TEXT NOT NULL UNIQUE,
 	user_id BIGINT REFERENCES users ON DELETE SET NULL,
 	body JSONB,
@@ -333,7 +338,7 @@ CREATE TABLE user_interests_category (
 -- --------------------------------------------------------------- --
 
 CREATE TABLE chat_sessions (
-	chat_id BIGSERIAL PRIMARY KEY,
+	chat_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	chat_name TEXT,
 	created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -347,7 +352,7 @@ CREATE TABLE chat_members (
 );
 
 CREATE TABLE chat_messages (
-	chat_message_id BIGSERIAL PRIMARY KEY,
+	chat_message_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	user_id BIGINT REFERENCES users ON DELETE SET NULL,
 	chat_id BIGINT REFERENCES chat_sessions ON DELETE CASCADE,
 	body TEXT,
@@ -373,7 +378,7 @@ CREATE TABLE login_sessions (
 );
 
 CREATE TABLE notifications (
-	notif_id BIGSERIAL PRIMARY KEY,
+	notif_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	user_id BIGINT UNIQUE NOT NULL REFERENCES users ON DELETE CASCADE,
 	node_id BIGINT REFERENCES nodes ON DELETE CASCADE,
 	created_at TIMESTAMPTZ DEFAULT now()

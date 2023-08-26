@@ -1,0 +1,72 @@
+{
+  "type": "array",
+  "length": {
+    "type": "number",
+    "subtype": "u64",
+    "constant": 25
+  },
+  "content": {
+    "type": "object",
+    "user_id": {
+      "type": "number",
+      "id": {
+        "start_at": 1
+      }
+    },
+    "user_uid": {
+      "type": "string",
+      "uuid": {}
+    },
+    "username": {
+      "type": "string",
+      "unique": true,
+      "pattern": "[a-zA-Z0-9]{8,15}"
+    },
+    "email": {
+      "type": "string",
+      "faker": {
+        "generator": "safe_email"
+      },
+      "unique": true
+    },
+    "password": {
+      "type": "string",
+      "uuid": {}
+    },
+    "first_name": {
+      "type": "string",
+      "faker": {
+        "generator": "first_name"
+      },
+      "optional": true
+    },
+    "last_name": {
+      "type": "string",
+      "faker": {
+        "generator": "last_name"
+      },
+      "optional": true
+    },
+    "bio": {
+      "type": "string",
+      "faker": {
+        "generator": "catch_phrase"
+      },
+      "optional": true
+    },
+    "photo_small": {
+      "type": "string",
+      "faker": {
+        "generator": "file_path"
+      },
+      "optional": true
+    },
+    "photo_full": {
+      "type": "string",
+      "faker": {
+        "generator": "file_path"
+      },
+      "optional": true
+    }
+  }
+}
