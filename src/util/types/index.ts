@@ -43,3 +43,10 @@ export type PathArray<T extends object, D extends number = 10> = D extends never
         : never)
       : never
     : never;
+
+/** Inspiration & logic: https://stackoverflow.com/a/57576688/17804016 */
+export type OneProperty<T extends object, K = keyof T> = Partial<T> & (K extends keyof T
+  ? { [x in K]: T[K] } & Partial<{
+    [x in Exclude<keyof T, K>]: [never, 'Only one property can be passed'];
+  }>
+  : never);

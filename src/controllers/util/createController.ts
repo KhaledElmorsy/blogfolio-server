@@ -76,6 +76,8 @@ export type WrappedHandler<T extends Endpoint> = (
   request: T['request']
 ) => Promise<T['response']>;
 
+type TestingHandler<T extends 
+
 export type BaseController<T extends ControllerSchema<Controller>> = {
   [x in keyof T]: WrappedHandler<InferEndpoint<T[x]>>;
 };
@@ -124,6 +126,9 @@ export default function createController<
   const controller = factory(errorIDs);
   const endpointKeys = Object.keys(schema) as (keyof T)[];
   const endpointHandlers = {} as BaseController<T>;
+  const baseHandlers = {} as {
+    [x in keyof T]: EndpointHandler<InferEndpoint<T[x]>>;
+  };
 
   const codes = { success: SuccessCode, error: ErrorCode };
 
@@ -149,6 +154,14 @@ export default function createController<
         };
       }
       const { data: parsedRequest } = reqParse;
+
+      baseHandlers[key] = (inputRequest: typeof parsedRequest) =>
+        handler(inputRequest, {
+          codes,
+          response: createResponse,
+          error: createError,
+        });
+
       let response;
       try {
         response = await handler(parsedRequest, {
@@ -169,5 +182,5 @@ export default function createController<
     };
   });
 
-  return endpointHandlers;
+  return Object.assign(endpointHandlers, { __baseHandlers: baseHandlers });
 }

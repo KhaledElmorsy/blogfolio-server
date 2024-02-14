@@ -1,0 +1,4 @@
+{
+  "exec": "yarn vite-node ./src/app.ts",
+  "ext": "ts,json"
+}
