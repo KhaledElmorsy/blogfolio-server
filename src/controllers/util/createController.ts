@@ -76,8 +76,6 @@ export type WrappedHandler<T extends Endpoint> = (
   request: T['request']
 ) => Promise<T['response']>;
 
-type TestingHandler<T extends 
-
 export type BaseController<T extends ControllerSchema<Controller>> = {
   [x in keyof T]: WrappedHandler<InferEndpoint<T[x]>>;
 };
@@ -126,8 +124,14 @@ export default function createController<
   const controller = factory(errorIDs);
   const endpointKeys = Object.keys(schema) as (keyof T)[];
   const endpointHandlers = {} as BaseController<T>;
+  /**
+   * Base endpoint handler function for simpler testing. They skip parsing the request and response
+   * and don't take helper parameters such as {@link ResGenFactory} or {@link createError}.
+   */
   const baseHandlers = {} as {
-    [x in keyof T]: EndpointHandler<InferEndpoint<T[x]>>;
+    [x in keyof T]: (
+      req: InferEndpoint<T[x]>['request']
+    ) => Promise<InferEndpoint<T[x]>['response']>;
   };
 
   const codes = { success: SuccessCode, error: ErrorCode };
@@ -138,6 +142,12 @@ export default function createController<
     type EndpointCurr = InferEndpoint<typeof endpointSchema>;
     const createResponse = ResGenFactory<EndpointCurr['response']>();
     const handler = controller[key];
+    baseHandlers[key] = (inputRequest) =>
+      handler(inputRequest, {
+        codes,
+        response: createResponse,
+        error: createError,
+      });
 
     endpointHandlers[key] = async function (
       request: EndpointCurr['request'],
@@ -154,13 +164,6 @@ export default function createController<
         };
       }
       const { data: parsedRequest } = reqParse;
-
-      baseHandlers[key] = (inputRequest: typeof parsedRequest) =>
-        handler(inputRequest, {
-          codes,
-          response: createResponse,
-          error: createError,
-        });
 
       let response;
       try {
@@ -182,5 +185,5 @@ export default function createController<
     };
   });
 
-  return Object.assign(endpointHandlers, { __baseHandlers: baseHandlers });
+  return { ...endpointHandlers, __baseHandlers: baseHandlers };
 }

@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { withExpress } from '@/controllers/adapters';
-import { User as BaseController } from '@/controllers';
+import { User as UserController } from '@/controllers';
 
 const router = Router();
 
-const User = withExpress(BaseController);
+const User = withExpress(UserController);
 
 /* ================================= GET ==================================== */
 

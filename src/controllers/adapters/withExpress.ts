@@ -1,16 +1,16 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { WrappedHandler } from '../util/createController';
+import type { BaseController } from '../util/createController';
 
 export default function withExpress<
-  T extends Record<string, WrappedHandler<any>>,
+  T extends BaseController<any> & { __baseHandlers: unknown },
 >(controller: T) {
   type EndpointKey = keyof T extends infer K
     ? K extends `_${string}` | `#${string}`
       ? never
       : K & string
     : never;
-  const endpoints = Object.keys(controller).filter(
-    (k) => k.match(/^[^_#].*/),
+  const endpoints = Object.keys(controller).filter((k) =>
+    k.match(/^[^_#].*/),
   ) as EndpointKey[];
   const adaptedController = {} as {
     [x in EndpointKey]: (

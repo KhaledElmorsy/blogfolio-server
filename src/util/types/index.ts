@@ -44,7 +44,18 @@ export type PathArray<T extends object, D extends number = 10> = D extends never
       : never
     : never;
 
-/** Inspiration & logic: https://stackoverflow.com/a/57576688/17804016 */
+/**
+ * Force an object type that can have different potential properties to be only 
+ * able to have only one of those properties when defined.
+ *
+ * Inspiration & logic: https://stackoverflow.com/a/57576688/17804016 
+ * @example
+ * interface Foo{
+ *  a?: string;
+ *  b?: string
+ * };
+ * const OneProperty<fooTest> = {a: 'woot'} // type {a: string, b: never}
+ */
 export type OneProperty<T extends object, K = keyof T> = Partial<T> & (K extends keyof T
   ? { [x in K]: T[K] } & Partial<{
     [x in Exclude<keyof T, K>]: [never, 'Only one property can be passed'];

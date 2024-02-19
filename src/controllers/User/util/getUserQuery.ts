@@ -25,7 +25,7 @@ IGetUsersParams,
 >;
 
 export default function getUserQuery(
-  query: OneProperty<QueryFields>,
+  query: OneProperty<QueryFields>, // Search for only one query type.
   { fields, sort, nextId, limit }: UserQueryParams = {},
 ): IGetUsersParams {
   if (Object.keys(query).length > 1) {

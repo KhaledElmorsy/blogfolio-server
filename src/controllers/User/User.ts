@@ -1,107 +1,16 @@
-import { customAlphabet } from 'nanoid';
 import bcrypt from 'bcrypt';
-import { type Resources, endPoints } from '@blogfolio/types/User';
-import { errorIDs, type ResponseError } from '@blogfolio/types';
+import { endPoints } from '@blogfolio/types/User';
 import { pool, users as userDB } from '@/db';
+import { createController } from '@/controllers/util';
 import {
-  pickFields,
-  getMissingFieldValues,
-  createController,
-} from '@/controllers/util';
-import { type UserQueryParams, type QueryFields, getUserQuery } from './util';
-
-type BaseUser = Resources['User'];
-type QueriedUser = Resources['QueriedUser'];
-
-/* ========================================================================== */
-/*                               HELPERS                                      */
-/* ========================================================================== */
+  findMissing,
+  generateNewId,
+  generatePasswordHash,
+  getMissingIDErrors,
+  getUserList,
+} from './util';
 
 const DEFAULT_USER_LIST_SIZE_GENERAL = 20;
-
-async function getUserList<T extends UserQueryParams>(
-  query: QueryFields,
-  reqParams: T,
-) {
-  const users = await userDB.getUsers.run(getUserQuery(query, reqParams), pool);
-  const DEFAULT_USER_FIELDS = [
-    'username',
-    'id',
-  ] satisfies (keyof QueriedUser)[];
-  const responseFields = [
-    ...DEFAULT_USER_FIELDS,
-    ...(reqParams.fields ?? []),
-  ] as (
-    | (typeof DEFAULT_USER_FIELDS)[number]
-    | NonNullable<T['fields']>[number]
-  )[];
-  const usersCleanedFields = pickFields.array<(typeof users)[number],
-  (typeof responseFields)[number]
-  >(users, responseFields);
-  return usersCleanedFields;
-}
-
-async function findMissing<
-  F extends {
-    id?: BaseUser['id'][];
-    email?: BaseUser['email'][];
-    username?: BaseUser['username'][];
-  },
->(fields: F) {
-  const users = await userDB.find.run(
-    {
-      ids: fields.id ?? [null],
-      emails: fields.email ?? [null],
-      usernames: fields.username ?? [null],
-    },
-    pool,
-  );
-  return getMissingFieldValues<(typeof users)[number], F>(users, fields);
-}
-
-async function getMissingIDErrors(
-  ids: BaseUser['id'][],
-): Promise<ResponseError<typeof errorIDs.User.UserNotFound, { id: string }>[]> {
-  const missingValues = await findMissing({ id: ids });
-  return missingValues.map(
-    (data) =>
-      ({
-        ...errorIDs.User.UserNotFound,
-        data,
-      }) as const,
-  );
-}
-
-const generateId = (() => {
-  const letters = 'abcdefghijklmnopqrstuvwxyz';
-  const alphabet = `0123456789${letters}${letters.toUpperCase()}`;
-  return customAlphabet(alphabet, 8).bind(null, undefined);
-})();
-
-async function generateNewId() {
-  const MAX_ATTEMPTS = 1000;
-  let id;
-  let existingUsers;
-  let attempts = 0;
-  do {
-    attempts += 1;
-    id = generateId();
-    // User.checkExists processes the data, so run a direct DB call instead
-    existingUsers = await userDB.getUsers.run({ id }, pool);
-  } while (existingUsers.length && attempts < MAX_ATTEMPTS);
-  if (attempts === MAX_ATTEMPTS) {
-    throw new Error('Could not generate user ID');
-  }
-  return id;
-}
-
-function generatePasswordHash(password: string) {
-  return bcrypt.hash(password, 10);
-}
-
-/* ========================================================================== */
-/*                             Controller                                     */
-/* ========================================================================== */
 
 export default createController('User', endPoints, (errors) => ({
   async Get({ params: { id }, query: { fields } }, { codes, response, error }) {
@@ -115,7 +24,8 @@ export default createController('User', endPoints, (errors) => ({
   },
 
   async GetFollowers({ params: { id }, query }, { codes, response }) {
-    const missingIDErrors = await getMissingIDErrors([id]);
+    const missingIDs = await findMissing({ id: [id] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, { errors: missingIDErrors });
     }
@@ -129,7 +39,8 @@ export default createController('User', endPoints, (errors) => ({
   },
 
   async GetFollows({ params: { id }, query }, { codes, response }) {
-    const missingIDErrors = await getMissingIDErrors([id]);
+    const missingIDs = await findMissing({ id: [id] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, { errors: missingIDErrors });
     }
@@ -172,7 +83,8 @@ export default createController('User', endPoints, (errors) => ({
   },
 
   async GetCheckFollow({ params: { followerId, id } }, { codes, response }) {
-    const missingIDErrors = await getMissingIDErrors([id, followerId]);
+    const missingIDs = await findMissing({ id: [id, followerId] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, { errors: missingIDErrors });
     }
@@ -204,6 +116,7 @@ export default createController('User', endPoints, (errors) => ({
         ],
       });
     }
+
     const [passwordHash, id] = await Promise.all([
       generatePasswordHash(password),
       generateNewId(),
@@ -220,7 +133,8 @@ export default createController('User', endPoints, (errors) => ({
   },
 
   async Put({ params: { id }, body }, { codes, response }) {
-    const missingIDErrors = await getMissingIDErrors([id]);
+    const missingIDs = await findMissing({ id: [id] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, {
         errors: missingIDErrors,
@@ -234,7 +148,8 @@ export default createController('User', endPoints, (errors) => ({
     { params: { id }, body: { email } },
     { codes, response, error },
   ) {
-    const missingIDErrors = await getMissingIDErrors([id]);
+    const missingIDs = await findMissing({ id: [id] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, {
         errors: missingIDErrors,
@@ -255,7 +170,8 @@ export default createController('User', endPoints, (errors) => ({
     { params: { id }, body: { password } },
     { codes, response, error },
   ) {
-    const missingIDErrors = await getMissingIDErrors([id]);
+    const missingIDs = await findMissing({ id: [id] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, {
         errors: missingIDErrors,
@@ -279,7 +195,8 @@ export default createController('User', endPoints, (errors) => ({
     { params: { followerId, id } },
     { codes, response, error },
   ) {
-    const missingIDErrors = await getMissingIDErrors([id, followerId]);
+    const missingIDs = await findMissing({ id: [id, followerId] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, {
         errors: missingIDErrors,
@@ -306,7 +223,8 @@ export default createController('User', endPoints, (errors) => ({
   },
 
   async PutActivate({ params: { id } }, { codes, response, error }) {
-    const missingIDErrors = await getMissingIDErrors([id]);
+    const missingIDs = await findMissing({ id: [id] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, {
         errors: missingIDErrors,
@@ -326,7 +244,8 @@ export default createController('User', endPoints, (errors) => ({
     { params: { id }, body: { username } },
     { codes, response, error },
   ) {
-    const missingIDErrors = await getMissingIDErrors([id]);
+    const missingIDs = await findMissing({ id: [id] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, {
         errors: missingIDErrors,
@@ -344,7 +263,8 @@ export default createController('User', endPoints, (errors) => ({
   },
 
   async Delete({ params: { id } }, { codes, response }) {
-    const missingIDErrors = await getMissingIDErrors([id]);
+    const missingIDs = await findMissing({ id: [id] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, {
         errors: missingIDErrors,
@@ -359,7 +279,8 @@ export default createController('User', endPoints, (errors) => ({
     { params: { id, followerId } },
     { codes, response, error },
   ) {
-    const missingIDErrors = await getMissingIDErrors([id, followerId]);
+    const missingIDs = await findMissing({ id: [id, followerId] });
+    const missingIDErrors = await getMissingIDErrors(missingIDs);
     if (missingIDErrors.length) {
       return response(codes.error.NotFound, {
         errors: missingIDErrors,
