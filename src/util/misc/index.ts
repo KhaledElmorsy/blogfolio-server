@@ -1,1 +1,1 @@
-export { pick, omit } from './pickOrOmit';
+export { pick, omit } from './pickOmit';
