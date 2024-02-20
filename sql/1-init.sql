@@ -370,9 +370,14 @@ CREATE OR REPLACE TRIGGER chat_edit_time
 --	                           MISC                                --
 -- --------------------------------------------------------------- --
 
+CREATE TYPE platform AS ENUM('desktop', 'mobile');
+CREATE TYPE browser AS ENUM('chrome', 'opera', 'safari', 'firefox', 'edge', 'unknown');
+
 CREATE TABLE login_sessions (
 	session_id TEXT UNIQUE NOT NULL PRIMARY KEY,
-	user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
+	user_uid TEXT REFERENCES users(user_uid) ON DELETE CASCADE,
+	session_platform platform NOT NULL,
+	session_browser browser NOT NULL,
  	created_at TIMESTAMPTZ DEFAULT now(),
 	expires_at TIMESTAMPTZ NOT NULL
 );

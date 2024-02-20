@@ -1,0 +1,47 @@
+{
+  "type": "array",
+  "length": {
+    "type": "number",
+    "subtype": "u64",
+    "constant": 80
+  },
+  "content": {
+    "type": "object",
+    "session_id": {
+      "type": "string",
+      "uuid": {}
+    },
+    "user_uid": "@users.content.user_uid",
+    "created_at": {
+      "type": "date_time",
+      "format": "%+",
+      "subtype": "date_time",
+      "begin": "2024-01-01T00:00:00+00:00",
+      "end": "2024-05-01T00:00:00+00:00"
+    },
+    "expires_at": {
+      "type": "date_time",
+      "format": "%+",
+      "subtype": "date_time",
+      "begin": "2025-01-01T00:00:00+00:00",
+      "end": "2025-05-01T00:00:00+00:00"
+    },
+    "session_platform": {
+      "type": "string",
+      "categorical": {
+        "desktop": 1,
+        "mobile": 1
+      }
+    },
+    "session_browser":{
+      "type": "string",
+      "categorical": {
+        "chrome": 1,
+        "opera": 1,
+        "firefox": 1,
+        "edge": 1,
+        "safari": 1
+      }
+    }
+  }
+}
