@@ -1,28 +1,32 @@
-import express, { Router, json } from 'express';
-import type { ErrorRequestHandler } from 'express';
+import 'dotenv/config';
+import express, { Router, json, ErrorRequestHandler } from 'express';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import Debug from 'debug';
-import { users } from './routes';
+import useragent from 'express-useragent';
+import { ErrorCode } from '@blogfolio/types/Response';
+import { users, login } from './routes';
 
 const debug = Debug('app');
 
-const v1 = Router();
-v1.use(json());
-v1.use('/u', users);
-v1.use((req, res) => {
-  res.sendStatus(404);
-});
-
-// const handleErr: ErrorRequestHandler = (err, req, res, next) => {
-//   if (err instanceof ServerError) {
-//     err.respond(res);
-//   } else {
-//     console.log(err);
-//   }
-// };
-// v1.use(handleErr);
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  debug(err);
+  res.sendStatus(ErrorCode.InternalServerError);
+};
 
 const app = express();
+app.use(json());
+app.use(helmet());
+app.use(useragent.express());
+app.use(cookieParser());
+app.disable('x-powered-by');
+
+const v1 = Router();
+v1.use('/u', users);
+v1.use('/', login);
+
 app.use('/v1/', v1);
+app.use(errorHandler);
 
 const { PORT = 3000 } = process.env;
 app.listen(PORT, () => {
