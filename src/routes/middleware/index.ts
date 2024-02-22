@@ -1,1 +1,1 @@
-export { default as parseRequest } from '../utils/parseRequest';
+export { default as authenticate } from './authenticate';
