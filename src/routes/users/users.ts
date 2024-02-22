@@ -1,10 +1,8 @@
 import { Router } from 'express';
-import { withExpress } from '@/controllers/adapters';
-import { User as UserController } from '@/controllers';
+import { User } from '@/controllers';
+import { authenticate } from '../middleware';
 
 const router = Router();
-
-const User = withExpress(UserController);
 
 /* ================================= GET ==================================== */
 
@@ -26,17 +24,19 @@ router.get('/:followerId/follows/:id', User.GetCheckFollow);
 
 /* ================================= PUT ==================================== */
 
-router.put('/:id', User.Put);
+router.put('/*', authenticate);
 
-router.put('/:followerId/follows/:id', User.PutFollower);
+router.put('/', User.Put);
 
-router.put('/:id/email', User.PutEmail);
+router.put('/followers/:targetId', User.PutFollower);
 
-router.put('/:id/username', User.PutUsername);
+router.put('/email', User.PutEmail);
 
-router.put('/:id/password', User.PutPassword);
+router.put('/username', User.PutUsername);
 
-router.put('/:id/activate', User.PutActivate);
+router.put('/password', User.PutPassword);
+
+router.put('/activate', User.PutActivate);
 
 /* ================================ POST ==================================== */
 
@@ -44,8 +44,10 @@ router.post('/', User.Post);
 
 /* =============================== DELETE =================================== */
 
-router.delete('/:id', User.Delete);
+router.delete('/*', authenticate);
 
-router.delete('/:id/follows/:followerId', User.DeleteFollow);
+router.delete('/', User.Delete);
+
+router.delete('/follows/:targetId', User.DeleteFollow);
 
 export default router;

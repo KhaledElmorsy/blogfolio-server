@@ -4,8 +4,8 @@ import bcrypt from 'bcrypt';
 import { errorIDs } from '@blogfolio/types';
 import { ErrorCode, SuccessCode } from '@blogfolio/types/Response';
 import { Resources } from '@blogfolio/types/User';
+import * as userService from '@/services/user';
 import UserController from '../User';
-import * as controllerUtils from '../util';
 
 // Test the base controller implementations, skipping the request/response parsing
 const User = UserController.__baseHandlers;
@@ -37,7 +37,7 @@ const testUsers = [
 
 async function testUserIDNotFound(apiCall: () => Promise<any>) {
   const id = 'testID';
-  vi.spyOn(controllerUtils, 'findMissing').mockResolvedValue([{ id }]);
+  vi.spyOn(userService, 'findMissing').mockResolvedValue([{ id }]);
 
   const response = await apiCall();
 
@@ -52,7 +52,7 @@ async function testUserIDNotFound(apiCall: () => Promise<any>) {
 }
 
 function mockUserIdExists() {
-  vi.spyOn(controllerUtils, 'findMissing').mockResolvedValue([]);
+  vi.spyOn(userService, 'findMissing').mockResolvedValue([]);
 }
 
 afterEach(() => {
@@ -346,7 +346,7 @@ describe('GetCheckFollow', () => {
   const [id, followerId] = ['test', 'testFollower'];
   describe('Users dont exist', () => {
     test('Target ID not found: HTTP Error Not Found, API error for the ID', async () => {
-      vi.spyOn(controllerUtils, 'findMissing').mockResolvedValue([{ id }]);
+      vi.spyOn(userService, 'findMissing').mockResolvedValue([{ id }]);
 
       const response = await User.GetCheckFollow({
         params: { id, followerId },
@@ -363,7 +363,7 @@ describe('GetCheckFollow', () => {
     });
 
     test('Follower Id not found: HTTP Error Not Found, API error for follower ID', async () => {
-      vi.spyOn(controllerUtils, 'findMissing').mockResolvedValue([
+      vi.spyOn(userService, 'findMissing').mockResolvedValue([
         { id: followerId },
       ]);
 
@@ -382,7 +382,7 @@ describe('GetCheckFollow', () => {
     });
 
     test('Both IDs not found: HTTP error 404, Api error for each ID', async () => {
-      vi.spyOn(controllerUtils, 'findMissing').mockResolvedValue([
+      vi.spyOn(userService, 'findMissing').mockResolvedValue([
         { id },
         { id: followerId },
       ]);
@@ -454,7 +454,7 @@ describe('Post', () => {
 
   describe('Username or email exist:', () => {
     test('Username already exists: HTTP Conflict. Username in response', async () => {
-      vi.spyOn(controllerUtils, 'findMissing').mockImplementation(
+      vi.spyOn(userService, 'findMissing').mockImplementation(
         async ({ email, username }) =>
           (username?.length ? [] : [{ email: email?.[0] ?? '' }]),
       );
@@ -472,7 +472,7 @@ describe('Post', () => {
     });
 
     test('Email already exists: HTTP Conflict. Email in response', async () => {
-      vi.spyOn(controllerUtils, 'findMissing').mockImplementation(
+      vi.spyOn(userService, 'findMissing').mockImplementation(
         async ({ email, username }) =>
           (email?.length ? [] : [{ username: username?.[0] ?? '' }]),
       );
@@ -509,7 +509,7 @@ describe('Post', () => {
     });
   });
   test('Email/username available: HTTP Created & returns gen ID. Hashes pass. Adds to DB.', async () => {
-    vi.spyOn(controllerUtils, 'findMissing').mockResolvedValue([
+    vi.spyOn(userService, 'findMissing').mockResolvedValue([
       { email: '!' },
       { username: '!' },
     ]);
@@ -517,8 +517,8 @@ describe('Post', () => {
     const testID = 'testID';
     const mockHasher = (pass: string) => `${pass}Hash`;
 
-    vi.spyOn(controllerUtils, 'generateNewId').mockResolvedValue(testID);
-    vi.spyOn(controllerUtils, 'generatePasswordHash').mockImplementation(
+    vi.spyOn(userService, 'generateNewId').mockResolvedValue(testID);
+    vi.spyOn(userService, 'generatePasswordHash').mockImplementation(
       async (pass) => mockHasher(pass),
     );
 
@@ -550,12 +550,6 @@ describe('Put', () => {
     photoFull: 'full.jpg',
   };
 
-  test('User Id not found: HTTP Error Not found. Include ID in response', async () => {
-    await testUserIDNotFound(() =>
-      User.Put({ params: { id: testID }, body: newData }),
-    );
-  });
-
   test('User exists: HTTP Success Ok. Respond back with ID. Update DB.', async () => {
     mockUserIdExists();
 
@@ -563,7 +557,9 @@ describe('Put', () => {
       .spyOn(userDB.update, 'run')
       .mockImplementation(async () => []);
 
-    const response = await User.Put({ params: { id: testID }, body: newData });
+    const response = await User.Put({ body: newData }, {
+      res: { locals: { userID: testID } },
+    } as any);
 
     expect(dbUpdateSpy.mock.calls[0][0]).toMatchObject({
       id: testID,
@@ -580,19 +576,16 @@ describe('PutEmail', () => {
   const testID = 'testID';
   const newEmail = 'newEmail';
 
-  test('User Id not found: HTTP Error Not found. Include ID in response', async () => {
-    await testUserIDNotFound(() =>
-      User.PutEmail({ params: { id: testID }, body: { email: newEmail } }),
-    );
-  });
   describe('User ID Exists', () => {
-    test('New email already taken. HTTP Conflict Error. Response includes email', async () => {
+    test('New email already taken: HTTP Conflict Error. Response includes email', async () => {
       mockUserIdExists();
 
-      const response = await User.PutEmail({
-        params: { id: testID },
-        body: { email: newEmail },
-      });
+      const response = await User.PutEmail(
+        {
+          body: { email: newEmail },
+        },
+        { res: { locals: { userID: testID } } } as any,
+      );
 
       expect(response.status).toBe(ErrorCode.Conflict);
       if (response.status === ErrorCode.Conflict) {
@@ -606,17 +599,19 @@ describe('PutEmail', () => {
   });
 
   test('New Email available. HTTP Success Ok. Updates email. Responds with ID', async () => {
-    vi.spyOn(controllerUtils, 'findMissing').mockImplementation(
+    vi.spyOn(userService, 'findMissing').mockImplementation(
       async ({ email }) => (email ? [{ email: email?.[0] ?? '' }] : []),
     );
     const dbEmailSpy = vi
       .spyOn(userDB.update, 'run')
       .mockImplementation(async () => []);
 
-    const response = await User.PutEmail({
-      params: { id: testID },
-      body: { email: newEmail },
-    });
+    const response = await User.PutEmail(
+      {
+        body: { email: newEmail },
+      },
+      { res: { locals: { userID: testID } } } as any,
+    );
 
     expect(dbEmailSpy.mock.calls[0][0]).toMatchObject({
       id: testID,
@@ -633,18 +628,12 @@ describe('PutPassword', () => {
   const id = 'testID';
   const password = 'testPassword';
 
-  test('User Id not found: HTTP Error Not found. Include ID in response', async () => {
-    await testUserIDNotFound(() =>
-      User.PutPassword({ params: { id }, body: { password } }),
-    );
-  });
-
   describe('User Id found', () => {
     const hashPassword = (pass: string) => `${pass}Hash`;
 
     beforeEach(() => {
       mockUserIdExists();
-      vi.spyOn(controllerUtils, 'generatePasswordHash').mockImplementation(
+      vi.spyOn(userService, 'generatePasswordHash').mockImplementation(
         async (pass) => hashPassword(pass),
       );
       vi.spyOn(bcrypt, 'compare').mockImplementation(
@@ -657,10 +646,12 @@ describe('PutPassword', () => {
         { password: hashPassword(password) },
       ]);
 
-      const response = await User.PutPassword({
-        params: { id },
-        body: { password },
-      });
+      const response = await User.PutPassword(
+        {
+          body: { password },
+        },
+        { res: { locals: { userID: id } } } as any,
+      );
 
       expect(response.status).toBe(ErrorCode.Conflict);
       if (response.status === ErrorCode.Conflict) {
@@ -679,10 +670,12 @@ describe('PutPassword', () => {
         .spyOn(userDB.update, 'run')
         .mockImplementation(async () => []);
 
-      const response = await User.PutPassword({
-        params: { id },
-        body: { password },
-      });
+      const response = await User.PutPassword(
+        {
+          body: { password },
+        },
+        { res: { locals: { userID: id } } },
+      );
 
       expect(dbPassSpy.mock.calls[0][0]).toMatchObject({
         id,
@@ -698,25 +691,27 @@ describe('PutPassword', () => {
 });
 
 describe('PutFollower', () => {
-  const targetId = 'target';
   const followerId = 'follower';
+  const targetId = 'target';
 
   describe('IDs not found:', () => {
     const missingIDs = new Set();
     beforeEach(() => {
       missingIDs.clear();
-      vi.spyOn(controllerUtils, 'findMissing').mockImplementation(
-        async ({ id }) =>
-          (id as string[]).flatMap((currID) =>
-            (missingIDs.has(currID) ? [{ id: currID }] : []),
-          ),
+      vi.spyOn(userService, 'findMissing').mockImplementation(async ({ id }) =>
+        (id as string[]).flatMap((currID) =>
+          (missingIDs.has(currID) ? [{ id: currID }] : []),
+        ),
       );
     });
     test('Target Id not found: HTTP Error Not found. Include ID in response', async () => {
       missingIDs.add(targetId);
-      const response = await User.PutFollower({
-        params: { id: targetId, followerId },
-      });
+      const response = await User.PutFollower(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID: followerId } } },
+      );
       expect(response.status).toBe(ErrorCode.NotFound);
       if (response.status === ErrorCode.NotFound) {
         expect(response.body.errors.length).toBe(1);
@@ -728,9 +723,12 @@ describe('PutFollower', () => {
     });
     test('Follower Id not found: HTTP Error Not found. Include ID in response', async () => {
       missingIDs.add(followerId);
-      const response = await User.PutFollower({
-        params: { id: targetId, followerId },
-      });
+      const response = await User.PutFollower(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID: followerId } } },
+      );
       expect(response.status).toBe(ErrorCode.NotFound);
       if (response.status === ErrorCode.NotFound) {
         expect(response.body.errors.length).toBe(1);
@@ -743,19 +741,22 @@ describe('PutFollower', () => {
     test('Both Ids not found: HTTP Error Not found. Include ID in response', async () => {
       missingIDs.add(targetId);
       missingIDs.add(followerId);
-      const response = await User.PutFollower({
-        params: { id: targetId, followerId },
-      });
+      const response = await User.PutFollower(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID: followerId } } },
+      );
       expect(response.status).toBe(ErrorCode.NotFound);
       if (response.status === ErrorCode.NotFound) {
         expect(response.body.errors.length).toBe(2);
         expect(response.body.errors[0]).toMatchObject({
           ...errorIDs.User.UserNotFound,
-          data: { id: targetId },
+          data: { id: followerId },
         });
         expect(response.body.errors[1]).toMatchObject({
           ...errorIDs.User.UserNotFound,
-          data: { id: followerId },
+          data: { id: targetId },
         });
       }
     });
@@ -768,9 +769,12 @@ describe('PutFollower', () => {
         { doesFollow: true },
       ]);
 
-      const response = await User.PutFollower({
-        params: { id: targetId, followerId },
-      });
+      const response = await User.PutFollower(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID: followerId } } },
+      );
 
       expect(response.status).toBe(ErrorCode.Conflict);
       if (response.status === ErrorCode.Conflict) {
@@ -792,9 +796,12 @@ describe('PutFollower', () => {
         .spyOn(userDB.addFollow, 'run')
         .mockImplementation(async () => []);
 
-      const response = await User.PutFollower({
-        params: { id: targetId, followerId },
-      });
+      const response = await User.PutFollower(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID: followerId } } },
+      );
 
       expect(dbFollowerSpy.mock.calls[0][0]).toMatchObject({
         id: targetId,
@@ -856,24 +863,21 @@ describe('PutActivate', () => {
 describe('PutUsername', () => {
   const id = 'testID';
   const username = 'testUsername';
-  test('User Id not found: HTTP Error Not found. Include ID in response', async () => {
-    await testUserIDNotFound(() =>
-      User.PutUsername({ params: { id }, body: { username } }),
-    );
-  });
   describe('User ID exists', () => {
     test('Username already exists: HTTP Conflict. Respond with username', async () => {
-      vi.spyOn(controllerUtils, 'findMissing').mockImplementation(
+      vi.spyOn(userService, 'findMissing').mockImplementation(
         async ({ id: ID, username: user }) => {
           if (ID?.length) return [];
           return user?.length ? [] : [{ username: 'test' }];
         },
       );
 
-      const response = await User.PutUsername({
-        params: { id },
-        body: { username },
-      });
+      const response = await User.PutUsername(
+        {
+          body: { username },
+        },
+        { res: { locals: { userID: id } } },
+      );
 
       expect(response.status).toBe(ErrorCode.Conflict);
       if (response.status === ErrorCode.Conflict) {
@@ -885,7 +889,7 @@ describe('PutUsername', () => {
     });
 
     test('Username doesnt exist: HTTP Ok. Respond with ID. Update DB', async () => {
-      vi.spyOn(controllerUtils, 'findMissing').mockImplementation(
+      vi.spyOn(userService, 'findMissing').mockImplementation(
         async ({ id: ID, username: user }) => {
           if (ID?.length) return [];
           return user?.length ? [{ username }] : [];
@@ -895,10 +899,12 @@ describe('PutUsername', () => {
         .spyOn(userDB.update, 'run')
         .mockImplementation(async () => []);
 
-      const response = await User.PutUsername({
-        params: { id },
-        body: { username },
-      });
+      const response = await User.PutUsername(
+        {
+          body: { username },
+        },
+        { res: { locals: { userID: id } } },
+      );
 
       expect(dbUsernameSpy.mock.calls[0][0]).toMatchObject({ id, username });
       expect(response.status).toBe(SuccessCode.Ok);
@@ -911,16 +917,13 @@ describe('PutUsername', () => {
 
 describe('Delete', () => {
   const id = 'testID';
-  test('User Id not found: HTTP Error Not found. Include ID in response', async () => {
-    await testUserIDNotFound(() => User.Delete({ params: { id } }));
-  });
   test('User Id exists: HTTP Ok. Respond with ID. Delete from DB.', async () => {
     mockUserIdExists();
     const dbDropSpy = vi
       .spyOn(userDB.drop, 'run')
       .mockImplementation(async () => []);
 
-    const response = await User.Delete({ params: { id } });
+    const response = await User.Delete({}, { res: { locals: { userID: id } } });
 
     expect(dbDropSpy.mock.calls[0][0]).toMatchObject({ ids: [id] });
     expect(response.status).toBe(SuccessCode.Ok);
@@ -932,24 +935,26 @@ describe('Delete', () => {
 
 describe('DeleteFollow', () => {
   const targetId = 'target';
-  const followerId = 'follower';
+  const userID = 'follower';
 
   describe('IDs not found:', () => {
     const missingIDs = new Set();
     beforeEach(() => {
       missingIDs.clear();
-      vi.spyOn(controllerUtils, 'findMissing').mockImplementation(
-        async ({ id }) =>
-          (id as string[]).flatMap((currID) =>
-            (missingIDs.has(currID) ? [{ id: currID }] : []),
-          ),
+      vi.spyOn(userService, 'findMissing').mockImplementation(async ({ id }) =>
+        (id as string[]).flatMap((currID) =>
+          (missingIDs.has(currID) ? [{ id: currID }] : []),
+        ),
       );
     });
     test('Target Id not found: HTTP Error Not found. Include ID in response', async () => {
       missingIDs.add(targetId);
-      const response = await User.DeleteFollow({
-        params: { id: targetId, followerId },
-      });
+      const response = await User.DeleteFollow(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID } } },
+      );
       expect(response.status).toBe(ErrorCode.NotFound);
       if (response.status === ErrorCode.NotFound) {
         expect(response.body.errors.length).toBe(1);
@@ -960,35 +965,43 @@ describe('DeleteFollow', () => {
       }
     });
     test('Follower Id not found: HTTP Error Not found. Include ID in response', async () => {
-      missingIDs.add(followerId);
-      const response = await User.DeleteFollow({
-        params: { id: targetId, followerId },
-      });
+      missingIDs.add(userID);
+      const response = await User.DeleteFollow(
+        {
+          params: { targetId },
+        },
+        {
+          res: { locals: { userID } },
+        },
+      );
       expect(response.status).toBe(ErrorCode.NotFound);
       if (response.status === ErrorCode.NotFound) {
         expect(response.body.errors.length).toBe(1);
         expect(response.body.errors[0]).toMatchObject({
           ...errorIDs.User.UserNotFound,
-          data: { id: followerId },
+          data: { id: userID },
         });
       }
     });
     test('Both Ids not found: HTTP Error Not found. Include ID in response', async () => {
       missingIDs.add(targetId);
-      missingIDs.add(followerId);
-      const response = await User.DeleteFollow({
-        params: { id: targetId, followerId },
-      });
+      missingIDs.add(userID);
+      const response = await User.DeleteFollow(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID } } },
+      );
       expect(response.status).toBe(ErrorCode.NotFound);
       if (response.status === ErrorCode.NotFound) {
         expect(response.body.errors.length).toBe(2);
         expect(response.body.errors[0]).toMatchObject({
           ...errorIDs.User.UserNotFound,
-          data: { id: targetId },
+          data: { id: userID },
         });
         expect(response.body.errors[1]).toMatchObject({
           ...errorIDs.User.UserNotFound,
-          data: { id: followerId },
+          data: { id: targetId },
         });
       }
     });
@@ -1001,15 +1014,18 @@ describe('DeleteFollow', () => {
         { doesFollow: false },
       ]);
 
-      const response = await User.DeleteFollow({
-        params: { id: targetId, followerId },
-      });
+      const response = await User.DeleteFollow(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID } } },
+      );
 
       expect(response.status).toBe(ErrorCode.Conflict);
       if (response.status === ErrorCode.Conflict) {
         expect(response.body.errors[0]).toMatchObject({
           ...errorIDs.User.NotFollowing,
-          data: { target: { id: targetId }, follower: { id: followerId } },
+          data: { target: { id: targetId }, follower: { id: userID } },
         });
       }
     });
@@ -1021,13 +1037,16 @@ describe('DeleteFollow', () => {
         .spyOn(userDB.removeFollow, 'run')
         .mockImplementation(async () => []);
 
-      const response = await User.DeleteFollow({
-        params: { id: targetId, followerId },
-      });
+      const response = await User.DeleteFollow(
+        {
+          params: { targetId },
+        },
+        { res: { locals: { userID } } },
+      );
 
       expect(dbFollowDeleteSpy.mock.calls[0][0]).toMatchObject({
         id: targetId,
-        followerId,
+        followerId: userID,
       });
 
       expect(response.status).toBe(SuccessCode.Ok);
@@ -1035,7 +1054,7 @@ describe('DeleteFollow', () => {
         expect(response.body).toMatchObject({
           data: {
             target: { id: targetId },
-            follower: { id: followerId },
+            follower: { id: userID },
           },
         });
       }

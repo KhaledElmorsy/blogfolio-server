@@ -38,6 +38,14 @@ export async function getUserList<T extends UserQueryParams>(
   return usersCleanedFields;
 }
 
+export async function checkUserPassword(userID: string, password: string) {
+  const [{ password: storedHash }] = await userDB.getPassword.run(
+    { id: userID },
+    pool,
+  );
+  return bcrypt.compare(password, storedHash);
+}
+
 export async function findMissing<
   F extends {
     id?: BaseUser['id'][];

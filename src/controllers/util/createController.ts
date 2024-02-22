@@ -18,6 +18,11 @@ import {
 } from '@blogfolio/types/ResponseError';
 import type { PickValues } from '@/util';
 import debug from 'debug';
+import type {
+  Request,
+  Response as ExpressResponse,
+  NextFunction,
+} from 'express';
 import mapZodError from './mapZodError';
 
 /**
@@ -63,18 +68,37 @@ type ResponseCodes<R extends Response> = {
   error: PickValues<typeof ErrorCode, R['status'] & ErrorCode>;
 };
 
+export interface ExpressParameters {
+  req: Request;
+  res: ExpressResponse;
+  next: NextFunction;
+}
+
+/**
+ * What each base handler is converted into. It accepts a parsed request object
+ * as defined by the schema as well as helpers to ease each endpoint definition.
+ *
+ * Express's route parameters are also passed in case they're needed. i.e. setting
+ * cookies or accessing res.locals.
+ *
+ * The return value type is also inferred from the schema and has full TS
+ * type hinting and checking.
+ */
 type EndpointHandler<T extends Endpoint, R extends Response = T['response']> = (
   request: T['request'],
   helpers: {
     codes: ResponseCodes<R>;
-    response: ReturnType<typeof ResGenFactory<R>>;
-    error: typeof createError;
-  }
+    createResponse: ReturnType<typeof ResGenFactory<R>>;
+    createError: typeof createError;
+  },
+  express: ExpressParameters
 ) => Promise<R>;
 
 export type WrappedHandler<T extends Endpoint> = (
-  request: T['request']
-) => Promise<T['response']>;
+  req: Request & T['request'],
+  res: ExpressResponse,
+  next: NextFunction
+) => Promise<void>;
 
 export type BaseController<T extends ControllerSchema<Controller>> = {
   [x in keyof T]: WrappedHandler<InferEndpoint<T[x]>>;
@@ -130,7 +154,10 @@ export default function createController<
    */
   const baseHandlers = {} as {
     [x in keyof T]: (
-      req: InferEndpoint<T[x]>['request']
+      req: InferEndpoint<T[x]>['request'],
+      expressParams?: Partial<{
+        [p in keyof ExpressParameters]: Partial<ExpressParameters[p]>;
+      }>
     ) => Promise<InferEndpoint<T[x]>['response']>;
   };
 
@@ -142,46 +169,70 @@ export default function createController<
     type EndpointCurr = InferEndpoint<typeof endpointSchema>;
     const createResponse = ResGenFactory<EndpointCurr['response']>();
     const handler = controller[key];
-    baseHandlers[key] = (inputRequest) =>
-      handler(inputRequest, {
-        codes,
-        response: createResponse,
-        error: createError,
-      });
+
+    baseHandlers[key] = (inputRequest, expressParams?) =>
+      handler(
+        inputRequest,
+        {
+          codes,
+          createResponse,
+          createError,
+        },
+        expressParams as ExpressParameters,
+      );
 
     endpointHandlers[key] = async function (
-      request: EndpointCurr['request'],
-    ): Promise<EndpointCurr['response']> {
-      const reqParse = endpointSchema.request.safeParse(request);
-      if (!reqParse.success) {
-        log(reqParse.error);
-        return {
+      req: Request,
+      res: ExpressResponse,
+      next: NextFunction,
+    ) {
+      const requestParseResult = endpointSchema.request.safeParse(req);
+      if (!requestParseResult.success) {
+        log(requestParseResult.error);
+
+        // Each parse issue is mapped to an error. Create an array of those errors
+        // and respond.
+        res.json({
           status: ErrorCode.BadRequest,
           body: {
             status: ResponseBodyStatus.failure,
-            errors: mapZodError(reqParse.error),
+            errors: mapZodError(requestParseResult.error),
           },
-        };
+        });
+        next();
+        return;
       }
-      const { data: parsedRequest } = reqParse;
+
+      const parsedRequest = requestParseResult.data;
 
       let response;
       try {
-        response = await handler(parsedRequest, {
-          codes,
-          response: createResponse,
-          error: createError,
-        });
+        response = await handler(
+          parsedRequest,
+          {
+            codes,
+            createResponse,
+            createError,
+          },
+          { req, res, next },
+        );
       } catch (err) {
         log(err);
-        return serverError;
+        res.json(serverError);
       }
-      const resParse = endpointSchema.response.safeParse(response);
-      if (!resParse.success) {
-        log(resParse.error);
-        return serverError;
+
+      if (response === undefined) {
+        next();
+        return;
       }
-      return resParse.data;
+
+      const responseParseResult = endpointSchema.response.safeParse(response);
+      if (!responseParseResult.success) {
+        log(responseParseResult.error);
+        res.json(serverError);
+        return;
+      }
+      res.json(responseParseResult.data);
     };
   });
 
