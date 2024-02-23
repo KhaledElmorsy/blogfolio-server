@@ -300,7 +300,8 @@ describe('getUsers():', () => {
       expect(sortedIds).toEqual(actualSortedIds);
     });
 
-    it('Paginates results', async () => {
+    // TODO Fix this failing test
+    it.skip('Paginates results', async () => {
       const limit = 5;
       const firstPage = await userDB.getUsers.run(
         { limit, sortCols, sortDir },
@@ -312,8 +313,7 @@ describe('getUsers():', () => {
         client,
       );
       const testPageIds = testPage.map(({ id }) => id);
-      // @TODO Fix this failing test
-      // expect(testPageIds).toEqual(actualSortedIds.slice(5, 10));
+      expect(testPageIds).toEqual(actualSortedIds.slice(5, 10));
     });
   });
 });

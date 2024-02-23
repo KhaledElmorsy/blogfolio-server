@@ -1,1 +1,1 @@
-export {default as createSessionID} from './createSessionID';
+export { default as createSessionID } from './createSessionID';

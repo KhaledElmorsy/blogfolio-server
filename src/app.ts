@@ -9,6 +9,7 @@ import { users, authentication } from './routes';
 
 const debug = Debug('app');
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   debug(err);
   res.sendStatus(ErrorCode.InternalServerError);
