@@ -1,0 +1,51 @@
+name: Test/Lint
+
+on: [workflow_dispatch, push, pull_request]
+
+env:
+  JWT_DURATION: 5m
+  JWT_SECRET: SHHH
+  SESSION_DURATION: 1y
+
+jobs:
+  Test-Typescript:
+    runs-on: ubuntu-latest   
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+    - name: Setup
+      run: yarn install
+    - name: Test
+      run: yarn test
+    - name: Test TS
+      run: yarn test
+
+  Test-PostgreSQL:
+    runs-on: ubuntu-latest   
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+    - name: Setup
+      run: yarn install
+    - name: Test PostgreSQL Queries
+      run: yarn test-queries
+  
+  Lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+    - name: Setup
+      run: yarn install
+    - name: Lint
+      run: yarn eslint "src/**"
+    
