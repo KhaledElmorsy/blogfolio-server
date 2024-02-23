@@ -1,2 +1,2 @@
 export { users } from './users';
-export { login } from './login';
+export { authentication } from './authentication';

@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import Debug from 'debug';
 import useragent from 'express-useragent';
 import { ErrorCode } from '@blogfolio/types/Response';
-import { users, login } from './routes';
+import { users, authentication } from './routes';
 
 const debug = Debug('app');
 
@@ -23,7 +23,7 @@ app.disable('x-powered-by');
 
 const v1 = Router();
 v1.use('/u', users);
-v1.use('/', login);
+v1.use('/', authentication);
 
 app.use('/v1/', v1);
 app.use(errorHandler);
