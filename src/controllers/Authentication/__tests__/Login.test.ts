@@ -5,7 +5,7 @@ import { users as userDB } from '@/db';
 import * as userService from '@/services/user';
 import { ErrorCode, SuccessCode } from '@blogfolio/types/Response';
 import { errorIDs } from '@blogfolio/types';
-import { Login as LoginController } from '..';
+import { Authentication as LoginController } from '..';
 
 const mockExpress = {
   req: {
