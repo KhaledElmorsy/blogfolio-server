@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { User } from '@/controllers';
-import { authenticate } from '../middleware';
+import { authorize } from '../middleware';
 
 const router = Router();
 
@@ -24,7 +24,7 @@ router.get('/:followerId/follows/:id', User.GetCheckFollow);
 
 /* ================================= PUT ==================================== */
 
-router.put('/*', authenticate);
+router.put('/*', authorize);
 
 router.put('/', User.Put);
 
@@ -44,7 +44,7 @@ router.post('/', User.Post);
 
 /* =============================== DELETE =================================== */
 
-router.delete('/*', authenticate);
+router.delete('/*', authorize);
 
 router.delete('/', User.Delete);
 

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { test, describe, expect, vi, afterEach, beforeEach, it } from 'vitest';
-import { session, jwt, COOKIE_KEYS } from '@/services/authentication';
+import { session, jwt, COOKIE_KEYS } from '@/services/authorization';
 import { users as userDB } from '@/db';
 import * as userService from '@/services/user';
 import { ErrorCode, SuccessCode } from '@blogfolio/types/Response';
@@ -72,7 +72,7 @@ describe('PostLogin', () => {
       const sessionSpy = vi
         .spyOn(session, 'createSession')
         .mockResolvedValue(sessionID);
-      const jwtSpy = vi.spyOn(jwt, 'generateToken').mockReturnValue(token);
+      const jwtSpy = vi.spyOn(jwt, 'generate').mockReturnValue(token);
 
       const response = await Login.PostLogin(
         {
