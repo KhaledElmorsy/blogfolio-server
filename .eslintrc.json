@@ -12,7 +12,7 @@
     "project": "./tsconfig.json"
   },
   "plugins": ["@typescript-eslint", "jest"],
-  "ignorePatterns": ["**/*.queries.ts"],
+  "ignorePatterns": ["**/*.queries.ts", "**/*.json", "**/*.sql"],
   "rules": {
     "object-curly-newline": "off",
     "comma-dangle": "off",

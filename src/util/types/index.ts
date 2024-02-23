@@ -45,10 +45,10 @@ export type PathArray<T extends object, D extends number = 10> = D extends never
     : never;
 
 /**
- * Force an object type that can have different potential properties to be only 
+ * Force an object type that can have different potential properties to be only
  * able to have only one of those properties when defined.
  *
- * Inspiration & logic: https://stackoverflow.com/a/57576688/17804016 
+ * Inspiration & logic: https://stackoverflow.com/a/57576688/17804016
  * @example
  * interface Foo{
  *  a?: string;
