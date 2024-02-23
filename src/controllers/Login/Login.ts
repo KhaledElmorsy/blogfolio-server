@@ -1,6 +1,6 @@
 import { Login } from '@blogfolio/types';
 import { users as userDB, pool } from '@/db';
-import { session, jwt, COOKIE_KEYS } from '@/services/authentication';
+import { session, jwt, COOKIE_KEYS } from '@/services/authorization';
 import { checkUserPassword } from '@/services/user';
 import { createController } from '../util';
 
@@ -36,7 +36,7 @@ const controller = createController('Login', Login.endpoints, (errors) => ({
       httpOnly: true,
     });
 
-    const jwToken = jwt.generateToken({ userID });
+    const jwToken = jwt.generate({ userID });
     res.cookie(COOKIE_KEYS.jwt, jwToken, { secure: true, httpOnly: true });
 
     return createResponse(codes.success.Ok, {});

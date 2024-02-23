@@ -15,14 +15,14 @@ type Payload = {
   userID: string;
 };
 
-export function generateToken(payload: Payload) {
+export function generate(payload: Payload) {
   return jsonwebtoken.sign(payload, secret, { expiresIn: duration });
 }
 
-export function authenticateToken(token: string) {
+export function verify(token: string) {
   let payload: Payload;
   try {
-    payload = jsonwebtoken.verify(token, secret);
+    payload = jsonwebtoken.verify(token, secret) as Payload;
   } catch (err) {
     return undefined;
   }

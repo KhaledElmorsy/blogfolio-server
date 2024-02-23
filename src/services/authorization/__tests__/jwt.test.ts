@@ -3,12 +3,12 @@ import { describe, test, it, expect, vi } from 'vitest';
 import jsonwebtoken from 'jsonwebtoken';
 import { jwt } from '..';
 
-describe('authenticateToken', () => {
+describe('verify', () => {
   it('Returns the userID if the token gets verified', () => {
     const payload = { userID: 'testID' };
     const verifiedPayload = JSON.parse(JSON.stringify(payload));
     vi.spyOn(jsonwebtoken, 'verify').mockReturnValue(verifiedPayload);
-    const returnedUserID = jwt.authenticateToken('test');
+    const returnedUserID = jwt.verify('test');
     expect(returnedUserID).toBe(payload.userID);
   });
 
@@ -16,16 +16,16 @@ describe('authenticateToken', () => {
     vi.spyOn(jsonwebtoken, 'verify').mockImplementation(() => {
       throw 1;
     });
-    const returnedUserID = jwt.authenticateToken('test');
+    const returnedUserID = jwt.verify('test');
     expect(returnedUserID).toBe(undefined);
   });
 });
 
-describe('generateToken', () => {
+describe('generate', () => {
   it('Passes the payload, secret and duration when creating a token', () => {
     const moduleSpy = vi.spyOn(jsonwebtoken, 'sign');
     const payload = { userID: 'test' };
-    jwt.generateToken(payload);
+    jwt.generate(payload);
     expect(moduleSpy).toHaveBeenCalledWith(payload, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_DURATION,
     });
