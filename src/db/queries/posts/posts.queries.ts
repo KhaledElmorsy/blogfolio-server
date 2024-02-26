@@ -1,29 +1,31 @@
 /** Types generated for queries found in "src/db/queries/posts/posts.sql" */
 import { PreparedQuery } from '@pgtyped/runtime';
 
-export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
-
 /** 'Find' parameters type */
 export interface IFindParams {
-  createdAter?: Date | string | null | void;
-  createdBefore?: Date | string | null | void;
   id?: string | null | void;
-  user__id?: number | null | void;
-  userId?: string | null | void;
+  limit?: number | null | void;
+  nextID?: string | null | void;
+  recentFirst?: boolean | null | void;
+  search?: string | null | void;
+  slug?: string | null | void;
+  userID?: string | null | void;
+  username?: string | null | void;
   visible?: boolean | null | void;
 }
 
 /** 'Find' return type */
 export interface IFindResult {
-  author: string | null;
-  body: Json;
-  createdAt: Date | null;
+  body: string;
+  createdAt: Date;
   editedAt: Date | null;
   id: string;
-  slug: string | null;
+  slug: string;
   summary: string | null;
   title: string;
+  userID: string;
   views: number;
+  visible: boolean;
 }
 
 /** 'Find' query type */
@@ -32,20 +34,21 @@ export interface IFindQuery {
   result: IFindResult;
 }
 
-const findIR: any = {"usedParamSet":{"userId":true,"id":true,"visible":true,"user__id":true,"createdBefore":true,"createdAter":true},"params":[{"name":"userId","required":false,"transform":{"type":"scalar"},"locs":[{"a":63,"b":69},{"a":430,"b":436}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":333,"b":335},{"a":340,"b":342}]},{"name":"visible","required":false,"transform":{"type":"scalar"},"locs":[{"a":370,"b":377},{"a":382,"b":389}]},{"name":"user__id","required":false,"transform":{"type":"scalar"},"locs":[{"a":466,"b":474},{"a":479,"b":487}]},{"name":"createdBefore","required":false,"transform":{"type":"scalar"},"locs":[{"a":518,"b":531},{"a":536,"b":549}]},{"name":"createdAter","required":false,"transform":{"type":"scalar"},"locs":[{"a":580,"b":591},{"a":596,"b":607}]}],"statement":"WITH \n  user_id AS (SELECT user_id FROM users WHERE user_uid = :userId)\nSELECT \n  post_uid as id,\n  post_slug as slug,\n  (select user_uid from users u where u.user_id = p.user_id) as \"author\",\n  title,\n  summary,\n  body,\n  num_views as \"views\",\n  created_at as \"createdAt\",\n  edited_at as \"editedAt\"\nFROM posts p\nWHERE\n  (post_uid = :id OR :id IS NULL)\n  AND (visible = :visible OR :visible IS NULL)\n  AND (p.user_id = user_id OR :userId IS NULL)\n  AND (p.user_id = :user__id or :user__id IS NULL)\n  AND (created_at < :createdBefore OR :createdBefore IS NULL)\n  AND (created_at > :createdAter OR :createdAter IS NULL)"};
+const findIR: any = {"usedParamSet":{"userID":true,"username":true,"id":true,"visible":true,"slug":true,"search":true,"nextID":true,"recentFirst":true,"limit":true},"params":[{"name":"userID","required":false,"transform":{"type":"scalar"},"locs":[{"a":70,"b":76},{"a":613,"b":619}]},{"name":"username","required":false,"transform":{"type":"scalar"},"locs":[{"a":92,"b":100},{"a":535,"b":543}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":371,"b":373},{"a":378,"b":380}]},{"name":"visible","required":false,"transform":{"type":"scalar"},"locs":[{"a":408,"b":415},{"a":420,"b":427}]},{"name":"slug","required":false,"transform":{"type":"scalar"},"locs":[{"a":452,"b":456},{"a":461,"b":465}]},{"name":"search","required":false,"transform":{"type":"scalar"},"locs":[{"a":675,"b":681},{"a":713,"b":719},{"a":736,"b":742}]},{"name":"nextID","required":false,"transform":{"type":"scalar"},"locs":[{"a":764,"b":770},{"a":945,"b":951},{"a":1026,"b":1032},{"a":1038,"b":1044}]},{"name":"recentFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":804,"b":815},{"a":1086,"b":1097}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":1174,"b":1179}]}],"statement":"WITH \n  mapped_user_id AS (SELECT user_id FROM users WHERE user_uid = :userID OR username = :username)\nSELECT \n  post_uid as id,\n  slug as slug,\n  (select user_uid from users u where u.user_id = p.user_id) as \"userID!\",\n  title,\n  summary,\n  body,\n  visible,\n  num_views as \"views\",\n  created_at as \"createdAt\",\n  edited_at as \"editedAt\"\nFROM posts p\nWHERE\n  (post_uid = :id OR :id IS NULL)\n  AND (visible = :visible OR :visible IS NULL)\n  AND (slug = :slug OR :slug IS NULL)\n  AND (p.user_id = (SELECT user_id FROM mapped_user_id) OR :username IS NULL)\n  AND (p.user_id = (SELECT user_id FROM mapped_user_id) OR :userID IS NULL)\n  AND ((text_search @@ to_tsquery('english', :search || ':*') OR similarity(title, :search) > 0.1)\n    OR :search IS NULL\n  ) \n  AND (:nextID::TEXT IS NULL OR \n    CASE WHEN :recentFirst \n      THEN (COALESCE(edited_at, created_at) < (\n        SELECT COALESCE(edited_at, created_at) FROM posts d WHERE d.post_uid = :nextID)\n  ) ELSE (num_views < (SELECT num_views FROM posts p WHERE p.post_uid = :nextID) OR :nextID IS NULL)\n    END)\n  ORDER BY (CASE WHEN :recentFirst THEN COALESCE(edited_at, created_at) END) DESC,\n    num_views DESC\n  LIMIT :limit"};
 
 /**
  * Query generated from SQL:
  * ```
  * WITH 
- *   user_id AS (SELECT user_id FROM users WHERE user_uid = :userId)
+ *   mapped_user_id AS (SELECT user_id FROM users WHERE user_uid = :userID OR username = :username)
  * SELECT 
  *   post_uid as id,
- *   post_slug as slug,
- *   (select user_uid from users u where u.user_id = p.user_id) as "author",
+ *   slug as slug,
+ *   (select user_uid from users u where u.user_id = p.user_id) as "userID!",
  *   title,
  *   summary,
  *   body,
+ *   visible,
  *   num_views as "views",
  *   created_at as "createdAt",
  *   edited_at as "editedAt"
@@ -53,50 +56,86 @@ const findIR: any = {"usedParamSet":{"userId":true,"id":true,"visible":true,"use
  * WHERE
  *   (post_uid = :id OR :id IS NULL)
  *   AND (visible = :visible OR :visible IS NULL)
- *   AND (p.user_id = user_id OR :userId IS NULL)
- *   AND (p.user_id = :user__id or :user__id IS NULL)
- *   AND (created_at < :createdBefore OR :createdBefore IS NULL)
- *   AND (created_at > :createdAter OR :createdAter IS NULL)
+ *   AND (slug = :slug OR :slug IS NULL)
+ *   AND (p.user_id = (SELECT user_id FROM mapped_user_id) OR :username IS NULL)
+ *   AND (p.user_id = (SELECT user_id FROM mapped_user_id) OR :userID IS NULL)
+ *   AND ((text_search @@ to_tsquery('english', :search || ':*') OR similarity(title, :search) > 0.1)
+ *     OR :search IS NULL
+ *   ) 
+ *   AND (:nextID::TEXT IS NULL OR 
+ *     CASE WHEN :recentFirst 
+ *       THEN (COALESCE(edited_at, created_at) < (
+ *         SELECT COALESCE(edited_at, created_at) FROM posts d WHERE d.post_uid = :nextID)
+ *   ) ELSE (num_views < (SELECT num_views FROM posts p WHERE p.post_uid = :nextID) OR :nextID IS NULL)
+ *     END)
+ *   ORDER BY (CASE WHEN :recentFirst THEN COALESCE(edited_at, created_at) END) DESC,
+ *     num_views DESC
+ *   LIMIT :limit
  * ```
  */
 export const find = new PreparedQuery<IFindParams,IFindResult>(findIR);
 
 
-/** 'GetId' parameters type */
-export interface IGetIdParams {
+/** 'GetPk' parameters type */
+export interface IGetPkParams {
   id?: string | null | void;
 }
 
-/** 'GetId' return type */
-export interface IGetIdResult {
-  __id: number;
+/** 'GetPk' return type */
+export interface IGetPkResult {
+  pk: number;
 }
 
-/** 'GetId' query type */
-export interface IGetIdQuery {
-  params: IGetIdParams;
-  result: IGetIdResult;
+/** 'GetPk' query type */
+export interface IGetPkQuery {
+  params: IGetPkParams;
+  result: IGetPkResult;
 }
 
-const getIdIR: any = {"usedParamSet":{"id":true},"params":[{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":53,"b":55}]}],"statement":"SELECT post_id as \"__id\" from posts WHERE post_uid = :id"};
+const getPkIR: any = {"usedParamSet":{"id":true},"params":[{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":51,"b":53}]}],"statement":"SELECT post_id as \"pk\" from posts WHERE post_uid = :id"};
 
 /**
  * Query generated from SQL:
  * ```
- * SELECT post_id as "__id" from posts WHERE post_uid = :id
+ * SELECT post_id as "pk" from posts WHERE post_uid = :id
  * ```
  */
-export const getId = new PreparedQuery<IGetIdParams,IGetIdResult>(getIdIR);
+export const getPk = new PreparedQuery<IGetPkParams,IGetPkResult>(getPkIR);
+
+
+/** 'AddView' parameters type */
+export interface IAddViewParams {
+  id?: string | null | void;
+}
+
+/** 'AddView' return type */
+export type IAddViewResult = void;
+
+/** 'AddView' query type */
+export interface IAddViewQuery {
+  params: IAddViewParams;
+  result: IAddViewResult;
+}
+
+const addViewIR: any = {"usedParamSet":{"id":true},"params":[{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":60,"b":62}]}],"statement":"UPDATE posts SET num_views = num_views + 1 WHERE post_uid = :id"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * UPDATE posts SET num_views = num_views + 1 WHERE post_uid = :id
+ * ```
+ */
+export const addView = new PreparedQuery<IAddViewParams,IAddViewResult>(addViewIR);
 
 
 /** 'Insert' parameters type */
 export interface IInsertParams {
-  body: Json;
-  postId: string;
+  body: string;
+  postID: string;
   slug?: string | null | void;
   summary?: string | null | void;
   title: string;
-  userId: number;
+  userID: string;
 }
 
 /** 'Insert' return type */
@@ -108,7 +147,7 @@ export interface IInsertQuery {
   result: IInsertResult;
 }
 
-const insertIR: any = {"usedParamSet":{"userId":true,"postId":true,"slug":true,"title":true,"summary":true,"body":true},"params":[{"name":"userId","required":true,"transform":{"type":"scalar"},"locs":[{"a":96,"b":103}]},{"name":"postId","required":true,"transform":{"type":"scalar"},"locs":[{"a":108,"b":115}]},{"name":"slug","required":false,"transform":{"type":"scalar"},"locs":[{"a":120,"b":124}]},{"name":"title","required":true,"transform":{"type":"scalar"},"locs":[{"a":129,"b":135}]},{"name":"summary","required":false,"transform":{"type":"scalar"},"locs":[{"a":140,"b":147}]},{"name":"body","required":true,"transform":{"type":"scalar"},"locs":[{"a":152,"b":157}]}],"statement":"INSERT INTO posts (\n  user_id,\n  post_uid,\n  post_slug,\n  title,\n  summary,\n  body\n) VALUES (\n  :userId!,\n  :postId!,\n  :slug,\n  :title!,\n  :summary,\n  :body!\n)"};
+const insertIR: any = {"usedParamSet":{"userID":true,"postID":true,"slug":true,"title":true,"summary":true,"body":true},"params":[{"name":"userID","required":true,"transform":{"type":"scalar"},"locs":[{"a":135,"b":142}]},{"name":"postID","required":true,"transform":{"type":"scalar"},"locs":[{"a":148,"b":155}]},{"name":"slug","required":false,"transform":{"type":"scalar"},"locs":[{"a":160,"b":164}]},{"name":"title","required":true,"transform":{"type":"scalar"},"locs":[{"a":169,"b":175}]},{"name":"summary","required":false,"transform":{"type":"scalar"},"locs":[{"a":180,"b":187}]},{"name":"body","required":true,"transform":{"type":"scalar"},"locs":[{"a":192,"b":197}]}],"statement":"INSERT INTO posts (\n  user_id,\n  post_uid,\n  slug,\n  title,\n  summary,\n  body\n) VALUES (\n  (SELECT user_id FROM users where user_uid = :userID!),\n  :postID!,\n  :slug,\n  :title!,\n  :summary,\n  :body!\n)"};
 
 /**
  * Query generated from SQL:
@@ -116,13 +155,13 @@ const insertIR: any = {"usedParamSet":{"userId":true,"postId":true,"slug":true,"
  * INSERT INTO posts (
  *   user_id,
  *   post_uid,
- *   post_slug,
+ *   slug,
  *   title,
  *   summary,
  *   body
  * ) VALUES (
- *   :userId!,
- *   :postId!,
+ *   (SELECT user_id FROM users where user_uid = :userID!),
+ *   :postID!,
  *   :slug,
  *   :title!,
  *   :summary,
@@ -135,8 +174,8 @@ export const insert = new PreparedQuery<IInsertParams,IInsertResult>(insertIR);
 
 /** 'Update' parameters type */
 export interface IUpdateParams {
-  body?: Json | null | void;
-  id?: number | null | void;
+  body?: string | null | void;
+  id?: string | null | void;
   slug?: string | null | void;
   summary?: string | null | void;
   title?: string | null | void;
@@ -152,46 +191,46 @@ export interface IUpdateQuery {
   result: IUpdateResult;
 }
 
-const updateIR: any = {"usedParamSet":{"slug":true,"title":true,"summary":true,"body":true,"visible":true,"id":true},"params":[{"name":"slug","required":false,"transform":{"type":"scalar"},"locs":[{"a":40,"b":44}]},{"name":"title","required":false,"transform":{"type":"scalar"},"locs":[{"a":78,"b":83}]},{"name":"summary","required":false,"transform":{"type":"scalar"},"locs":[{"a":115,"b":122}]},{"name":"body","required":false,"transform":{"type":"scalar"},"locs":[{"a":153,"b":157}]},{"name":"visible","required":false,"transform":{"type":"scalar"},"locs":[{"a":188,"b":195}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":223,"b":225}]}],"statement":"UPDATE posts\nSET\n  post_slug = COALESCE(:slug, post_slug),\n  title = COALESCE(:title, title),\n  summary = COALESCE(:summary, summary),\n  body = COALESCE(:body, body),\n  visible = COALESCE(:visible, visible)\nWHERE post_id = :id"};
+const updateIR: any = {"usedParamSet":{"slug":true,"title":true,"summary":true,"body":true,"visible":true,"id":true},"params":[{"name":"slug","required":false,"transform":{"type":"scalar"},"locs":[{"a":35,"b":39}]},{"name":"title","required":false,"transform":{"type":"scalar"},"locs":[{"a":68,"b":73}]},{"name":"summary","required":false,"transform":{"type":"scalar"},"locs":[{"a":105,"b":112}]},{"name":"body","required":false,"transform":{"type":"scalar"},"locs":[{"a":143,"b":147}]},{"name":"visible","required":false,"transform":{"type":"scalar"},"locs":[{"a":178,"b":185}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":214,"b":216}]}],"statement":"UPDATE posts\nSET\n  slug = COALESCE(:slug, slug),\n  title = COALESCE(:title, title),\n  summary = COALESCE(:summary, summary),\n  body = COALESCE(:body, body),\n  visible = COALESCE(:visible, visible)\nWHERE post_uid = :id"};
 
 /**
  * Query generated from SQL:
  * ```
  * UPDATE posts
  * SET
- *   post_slug = COALESCE(:slug, post_slug),
+ *   slug = COALESCE(:slug, slug),
  *   title = COALESCE(:title, title),
  *   summary = COALESCE(:summary, summary),
  *   body = COALESCE(:body, body),
  *   visible = COALESCE(:visible, visible)
- * WHERE post_id = :id
+ * WHERE post_uid = :id
  * ```
  */
 export const update = new PreparedQuery<IUpdateParams,IUpdateResult>(updateIR);
 
 
-/** 'Drop' parameters type */
-export interface IDropParams {
-  __ids: readonly (number | null | void)[];
+/** 'Remove' parameters type */
+export interface IRemoveParams {
+  ids: readonly (string | null | void)[];
 }
 
-/** 'Drop' return type */
-export type IDropResult = void;
+/** 'Remove' return type */
+export type IRemoveResult = void;
 
-/** 'Drop' query type */
-export interface IDropQuery {
-  params: IDropParams;
-  result: IDropResult;
+/** 'Remove' query type */
+export interface IRemoveQuery {
+  params: IRemoveParams;
+  result: IRemoveResult;
 }
 
-const dropIR: any = {"usedParamSet":{"__ids":true},"params":[{"name":"__ids","required":false,"transform":{"type":"array_spread"},"locs":[{"a":35,"b":40}]}],"statement":"DELETE FROM posts WHERE post_id IN :__ids"};
+const removeIR: any = {"usedParamSet":{"ids":true},"params":[{"name":"ids","required":false,"transform":{"type":"array_spread"},"locs":[{"a":36,"b":39}]}],"statement":"DELETE FROM posts WHERE post_uid IN :ids"};
 
 /**
  * Query generated from SQL:
  * ```
- * DELETE FROM posts WHERE post_id IN :__ids
+ * DELETE FROM posts WHERE post_uid IN :ids
  * ```
  */
-export const drop = new PreparedQuery<IDropParams,IDropResult>(dropIR);
+export const remove = new PreparedQuery<IRemoveParams,IRemoveResult>(removeIR);
 
 

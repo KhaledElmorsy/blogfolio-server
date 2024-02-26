@@ -1,9 +1,11 @@
-const escape = (value: unknown): string => {
+const escape = (value: unknown): any => {
   switch (typeof value) {
     case 'number':
       return value.toString();
     case 'string':
       return `'${value}'`;
+    case 'boolean':
+      return value;
     default:
       return value === null ? 'null' : `'${value}`;
   }
@@ -37,7 +39,7 @@ export default function generateDBInserts<T extends Schema>(
 
     const statement = `INSERT INTO ${tableName} (${columns.join(
       ', ',
-    )}) VALUES ${valueStrings};`;
+    )}) OVERRIDING SYSTEM VALUE VALUES ${valueStrings};`;
 
     statementMap[tableName] = statement;
   });

@@ -1,0 +1,70 @@
+{
+  "type": "array",
+  "length": {
+    "type": "number",
+    "constant": 70
+  },
+  "content": {
+    "type": "object",
+    "post_id": {
+      "type": "number",
+      "id": {}
+    },
+    "node_id": "@nodes.content.node_id",
+    "post_uid": {
+      "type":"string",
+      "uuid": {}
+    },
+    "user_id": "@users.content.user_id",
+    "title": {
+      "type": "string",
+      "faker": {
+        "generator": "bs"
+
+      }
+    },
+    "summary": {
+      "type": "string",
+      "faker": {
+        "generator": "bs"
+
+      }
+    },
+    "body": {
+      "type": "string",
+      "faker": {
+        "generator": "bs"
+
+      }
+    },
+    "num_views": {
+      "type": "number",
+      "range": {
+        "high": 2000,
+        "low": 0
+      }      
+    },
+    "visible": {
+      "type": "bool",
+      "frequency": 0.8
+    },
+    "slug": {
+      "type": "string",
+      "uuid": {}
+    },
+    "created_at": {
+      "type": "date_time",
+      "format": "%+",
+      "subtype": "date_time",
+      "begin": "2024-01-01T00:00:00+00:00",
+      "end": "2024-05-01T00:00:00+00:00"
+    },
+    "edited_at": {
+      "type": "date_time",
+      "format": "%+",
+      "subtype": "date_time",
+      "begin": "2024-01-01T00:00:00+00:00",
+      "end": "2024-05-01T00:00:00+00:00"
+    }
+  }
+}

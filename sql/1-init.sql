@@ -3,6 +3,13 @@ CREATE SCHEMA public;
 
 
 -- =============================================================== --
+--	                       EXTENSIONS                              --
+-- =============================================================== --
+
+/* Trigram matching for partial text searches */
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- =============================================================== --
 --	                   GENERAL PROCEDURES                          --
 -- =============================================================== --
 
@@ -62,95 +69,41 @@ CREATE INDEX user_follows_follower_id ON user_follows (follower_id);
 --	                           NODES                               --
 -- --------------------------------------------------------------- --
 
-CREATE TYPE node_ref AS ENUM (
-	'posts',
-	'comments'
-);
-
-CREATE FUNCTION create_node() RETURNS TRIGGER AS $$
-DECLARE
-	ref_table node_ref := TG_ARGV[0];
-	id_column TEXT := TG_ARGV[1];
-	new_node_id BIGINT;
-BEGIN
-	INSERT INTO nodes (node_ref) VALUES (ref_table) 
-		RETURNING node_id INTO new_node_id;
-	EXECUTE (FORMAT(
-		'UPDATE %I SET node_id = %L WHERE %I = $1.%I',
-		ref_table, new_node_id, id_column, id_column
-	)) USING NEW;
-	RETURN NULL;
-END $$ LANGUAGE 'plpgsql';
-
-CREATE FUNCTION remove_node() RETURNS TRIGGER AS $$
-BEGIN
-	DELETE FROM nodes WHERE node_id = OLD.node_id;
-	RETURN NULL;
-END $$ LANGUAGE 'plpgsql';
 
 CREATE TABLE nodes (
 	node_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-	parent_node_id BIGINT REFERENCES nodes ON DELETE CASCADE,
-	node_ref node_ref
+	node_parent_id BIGINT REFERENCES nodes ON DELETE CASCADE
 );
-CREATE INDEX node_parent ON nodes (parent_node_id);
-CREATE INDEX node_ref ON nodes (node_ref);
+CREATE INDEX node_parent ON nodes USING HASH (node_parent_id);
 
 CREATE TABLE posts (
 	node_id BIGINT UNIQUE REFERENCES nodes ON DELETE CASCADE,
 	post_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	post_uid TEXT NOT NULL UNIQUE,
-	post_slug TEXT,
 	user_id INT NOT NULL REFERENCES users ON DELETE CASCADE,
+	slug TEXT NOT NULL UNIQUE,
+	UNIQUE(slug, user_id),
 	title TEXT NOT NULL,
 	summary TEXT,
-	visible BOOLEAN DEFAULT TRUE,
+	visible BOOLEAN NOT NULL DEFAULT FALSE,
 	num_views INT NOT NULL DEFAULT 0,
-	body JSONB NOT NULL,
-	post_ts_vector TSVECTOR GENERATED ALWAYS AS (
-		to_tsvector('english', title ||' '||summary) || 
-		to_tsvector('english', body)
-	) STORED,
-	created_at TIMESTAMPTZ DEFAULT now(),
-	edited_at TIMESTAMPTZ
+	body TEXT NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+	edited_at TIMESTAMPTZ,
+	text_search TSVECTOR GENERATED ALWAYS AS (
+		setweight(to_tsvector('english', COALESCE(title, '')), 'A') ||
+		setweight(to_tsvector('english', COALESCE(summary, '')), 'B') ||
+		setweight(to_tsvector('english', COALESCE(body, '')), 'C')
+		) STORED
 );
-CREATE INDEX post_author ON posts (user_id);
-CREATE INDEX post_node ON posts (node_id);
+CREATE INDEX post_author ON posts USING HASH (user_id);
+CREATE INDEX post_node ON posts USING HASH (node_id);
+CREATE INDEX text_search ON posts USING GIN (text_search);
+CREATE INDEX title_trgm_index ON posts USING GIN (title gin_trgm_ops);
 CREATE TRIGGER post_edit_time
 	BEFORE UPDATE ON posts
 	FOR EACH ROW EXECUTE FUNCTION updateEditTime();
-CREATE TRIGGER remove_post_node
-	AFTER DELETE ON posts
-	FOR EACH ROW EXECUTE FUNCTION remove_node();
 
-/**
- * Create a post, its node, and link them.
- * Allows passing and setting the node's parent node 
- * in one go.
- */
-CREATE FUNCTION create_post(
-	p_user_id BIGINT,
-	p_post_uid TEXT,
-	p_title TEXT,
-	p_body JSONB,
-	p_post_slug TEXT DEFAULT NULL,
-	p_summary TEXT DEFAULT NULL,
-	p_visible BOOLEAN DEFAULT TRUE,
-	p_parent_node_id BIGINT DEFAULT NULL
-) RETURNS BIGINT AS $$
-DECLARE
-	new_node_id BIGINT;
-BEGIN
-	INSERT INTO posts 
-		(post_uid, post_slug, user_id, title, summary, visible, body)
-		VALUES
-		(p_post_uid, p_post_slug, p_user_id, p_title, p_summary, p_visible, p_body);
-	INSERT INTO nodes (parent_node_id) VALUES (p_parent_node_id)
-		RETURNING node_id into new_node_id;
-	UPDATE posts SET node_id = new_node_id WHERE post_uid = p_post_uid;
-	RETURN new_node_id;
-END $$ LANGUAGE 'plpgsql';
-	
 	
 CREATE TABLE post_user_views (
 	post_id BIGINT NOT NULL REFERENCES posts ON DELETE CASCADE,
@@ -163,39 +116,15 @@ CREATE TABLE comments (
 	comment_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	comment_uid TEXT NOT NULL UNIQUE,
 	user_id BIGINT REFERENCES users ON DELETE SET NULL,
-	body JSONB,
-    created_at TIMESTAMPTZ DEFAULT now(),
+	body TEXT NOT NULL,
+	created_at TIMESTAMPTZ DEFAULT now(),
 	edited_at TIMESTAMPTZ
 );
+CREATE INDEX comment_node ON comments USING HASH (node_id);
 CREATE OR REPLACE TRIGGER comment_edit_log
 	BEFORE UPDATE ON comments
 	FOR EACH ROW EXECUTE FUNCTION updateEditTime();
-CREATE TRIGGER remove_comment_node
-	AFTER DELETE ON comments
-	FOR EACH ROW EXECUTE FUNCTION remove_node();
-	
-/**
- * Create a comment, its node, and link them.
- * Allows passing and setting the node's parent 
- * node in one go.
- */
-CREATE FUNCTION create_comment(
-	p_comment_uid TEXT,
-	p_user_id BIGINT,
-	p_body JSONB,
-	p_parent_node_id BIGINT
-) RETURNS BIGINT AS $$
-DECLARE 
-	new_node_id BIGINT;
-BEGIN
-	INSERT INTO comments (user_id, comment_uid, body)
-		VALUES (p_user_id, p_comment_uid, p_body);
-	INSERT INTO nodes (parent_node_id, node_ref) VALUES (p_parent_node_id, 'comments')
-		RETURNING node_id INTO new_node_id;
-	UPDATE comments SET node_id = new_node_id WHERE comment_uid = p_comment_uid;
-	RETURN new_node_id;
-END $$ LANGUAGE 'plpgsql';
-	
+
 -- --------------------------------------------------------------- --
 --	                    CATEGORIES & TAGS                          --
 -- --------------------------------------------------------------- --
