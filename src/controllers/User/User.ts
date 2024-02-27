@@ -104,6 +104,19 @@ export default createController('User', endPoints, (errors) => ({
     return createResponse(codes.success.Ok, { data: { result: doesFollow } });
   },
 
+  async GetUsername(
+    { params: { username } },
+    { createResponse, createError, codes },
+  ) {
+    const usernameExists = (await findMissing({ username: [username] })).length === 0;
+    if (!usernameExists) {
+      return createResponse(codes.error.NotFound, {
+        errors: [createError(errors.User.UserNotFound, { username })],
+      });
+    }
+    return createResponse(codes.success.Ok, {});
+  },
+
   async Post({ body }, { codes, createResponse, createError }) {
     const { email, username, password } = body;
 

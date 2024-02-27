@@ -540,6 +540,30 @@ describe('Post', () => {
   });
 });
 
+describe('GetUsername', () => {
+  test('Username doesnt exist: HTTP Error Not found. Responds with username', async () => {
+    vi.spyOn(userService, 'findMissing').mockImplementation(async () => [
+      { username: 'test' },
+    ]);
+    const username = 'testUsername';
+    const response = await User.GetUsername({ params: { username } });
+    expect(response.status).toBe(ErrorCode.NotFound);
+    if (response.status === ErrorCode.NotFound) {
+      expect(response.body.errors[0]).toMatchObject({
+        ...errorIDs.User.UserNotFound,
+        data: { username },
+      });
+    }
+  });
+
+  test('Username exists: HTTP Success Ok', async () => {
+    vi.spyOn(userService, 'findMissing').mockImplementation(async () => []);
+    const username = 'testUsername';
+    const response = await User.GetUsername({ params: { username } });
+    expect(response.status).toBe(SuccessCode.Ok);
+  });
+});
+
 describe('Put', () => {
   const testID = 'test';
   const newData = {

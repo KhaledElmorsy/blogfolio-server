@@ -33,10 +33,10 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@blogfolio/types@^0.0.14":
-  version "0.0.14"
-  resolved "https://registry.yarnpkg.com/@blogfolio/types/-/types-0.0.14.tgz#b271103f873046e0ccccad900d1d96f40261e05b"
-  integrity sha512-Jp4t8c266uiHmjbO5dDL+0Hfj4OkBY5QRcuVxyjvBHfkPgqrk5ax31T9IfypCPyJ6gyDpDeG8IZKOM8LftbpFQ==
+"@blogfolio/types@^0.0.15":
+  version "0.0.15"
+  resolved "https://registry.yarnpkg.com/@blogfolio/types/-/types-0.0.15.tgz#9ad4e14645683257aaa5b205aaeaa4283f2d62f6"
+  integrity sha512-6i+nn4fXe+daU8uJeg9cga9On/Ux4rmVzhtIBPYOYrFjjtXZ1rw/93rpBjJVScNmn/ZRN/wRdqHt3lQE/8Tm+w==
 
 "@esbuild/android-arm64@0.18.12":
   version "0.18.12"
