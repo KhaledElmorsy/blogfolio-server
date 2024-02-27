@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import Debug from 'debug';
 import useragent from 'express-useragent';
 import { ErrorCode } from '@blogfolio/types/Response';
-import { users, authentication } from './routes';
+import { users, authentication, posts, username } from './routes';
 
 const debug = Debug('app');
 
@@ -23,7 +23,9 @@ app.use(cookieParser());
 app.disable('x-powered-by');
 
 const v1 = Router();
+v1.use('/p', posts);
 v1.use('/u', users);
+v1.use('/user', username);
 v1.use('/', authentication);
 
 app.use('/v1/', v1);
