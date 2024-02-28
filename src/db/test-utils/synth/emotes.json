@@ -1,0 +1,18 @@
+{
+  "type": "array",
+  "length": {
+    "type": "number",
+    "constant": 4
+  },
+  "content": {
+    "type": "object",
+    "emote_id": {
+      "type": "number",
+      "id": {}
+    },
+    "emote_body": {
+      "type": "number",
+      "id": {}
+    }
+  }
+}

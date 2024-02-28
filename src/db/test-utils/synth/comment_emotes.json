@@ -1,0 +1,13 @@
+{
+  "type": "array",
+  "length": {
+    "type": "number",
+    "constant": 450
+  },
+  "content": {
+    "type": "object",
+    "emote_id": "@emotes.content.emote_id",
+    "comment_id":"@comments.content.comment_id",
+    "user_id":"@users.content.user_id"
+  }
+}

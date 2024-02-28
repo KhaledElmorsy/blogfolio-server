@@ -1,55 +1,77 @@
 /* @name tree */
-WITH RECURSIVE comment_tree AS (
-	SELECT 1 as depth, root.parent_node_id, rc.*
-	FROM nodes root
-	INNER JOIN comments rc on rc.node_id = root.node_id
-	AND root.node_id = :node!
-	UNION
-	SELECT ct.depth+1 as n, child.parent_node_id, cc.*
-	FROM nodes child
-	INNER JOIN comments cc on cc.node_id = child.node_id
-	INNER JOIN comment_tree ct ON child.parent_node_id = ct.node_id
-	AND (ct.depth < :depth OR :depth IS NULL)
-) select 
-	parent_node_id as "parentNode",
-	node_id as node,
-	comment_uid as id,
-	user_id as "user__id",
-	body,
-	created_at as "createdAt",
-	edited_at as "editedAt"
-from comment_tree;
+WITH RECURSIVE comment_tree(comment_id, parent_comment_id, depth) AS (
+	SELECT comment_id, parent_comment_id, 0
+	FROM comments c
+	WHERE 
+		(c.post_id = (SELECT post_id FROM posts p WHERE p.post_uid = :postID) OR :postID IS NULL)
+	AND (comment_uid = :rootCommentID OR :rootCommentID IS NULL)
+	
+	UNION ALL
 
-/* @name getId */
-SELECT comment_id as "__id" FROM comments WHERE comment_uid = :id!;
+	SELECT c.comment_id, c.parent_comment_id, depth + 1
+	FROM comments c
+	INNER JOIN comment_tree ct ON ct.comment_id = c.parent_comment_id
+	AND (depth < :depth OR :depth IS NULL) 
+) SELECT co.comment_uid as "id", co.comment_id as "pk", co.parent_comment_id as "parentPK"
+FROM comment_tree ct
+INNER JOIN comments co ON ct.comment_id = co.comment_id;
 
 /* @name find */
 SELECT 
-  c.comment_uid as id,
-  u.user_uid as "userId",
-  c.body,
-  c.node_id as node,
-  c.created_at as "createdAt",
-  c.edited_at as "editedAt"
+  comment_uid as id,
+	(SELECT user_uid FROM users u WHERE u.user_id = c.user_id) as "userID",
+	(SELECT comment_uid FROM comments sc WHERE sc.comment_id = c.parent_comment_id) as "parentID",
+	(SELECT post_uid FROM posts p WHERE p.post_id = c.post_id) as "postID!",
+  body,
+  created_at as "createdAt",
+  edited_at as "editedAt",
+	COALESCE(count(ce.comment_id),0) as "emotes!"
 FROM comments c
-INNER JOIN users u ON c.user_id = u.user_id
+LEFT JOIN comment_emotes ce ON c.comment_id = ce.comment_id
 WHERE 
-  (c.comment_id = :__id OR :__id is NULL)
-  AND (c.comment_uid = :id OR :id is NULL)
-  AND (c.node_id = :node OR :node is NULL)
-  AND (c.user_id = :user__id OR :user__id is NULL);
+   (comment_uid = ANY (:ids) OR :ids is NULL)
+  AND (c.user_id = (SELECT user_id FROM users u WHERE u.user_uid = :userID) OR :userID IS NULL)
+  AND (c.post_id = (SELECT post_id FROM posts p WHERE p.post_uid = :postID) OR :postID IS NULL)
+  AND (c.user_id = (SELECT user_id FROM users u WHERE u.username = :username) OR :username IS NULL)
+  AND (c.post_id = (SELECT post_id FROM posts p WHERE p.slug = :slug) OR :slug IS NULL)
+	AND ( :nextID::TEXT IS NULL OR 
+		CASE WHEN :popular THEN  TRUE ELSE 
+	(created_at < (SELECT created_at FROM comments WHERE comment_uid = :nextID) OR :nextID IS NULL)
+	END)
+GROUP BY c.comment_id, id, "userID", "parentID", "postID!", body, "createdAt", "editedAt"
+HAVING (count(ce.comment_id) < (
+	SELECT count(ce.comment_id) FROM comment_emotes ce WHERE comment_id = (
+		SELECT comment_id FROM comments WHERE comment_uid = :nextID 
+	)
+)) OR ((:popular IS NULL OR :nextID IS NULL) AND NOT (:popular IS NOT NULL AND :nextID IS NOT NULL))
+ORDER BY CASE WHEN :popular THEN (SELECT count(ce.comment_id) FROM comment_emotes ce WHERE ce.comment_id = c.comment_id) END DESC,
+	created_at DESC
+LIMIT :limit;
 
-/* @name edit */
+/* @name update */
 UPDATE comments 
 SET body = :body!
-WHERE comment_id = :id!;
+WHERE comment_uid = :id!;
+
+/* @name insert */
+INSERT INTO comments (
+	comment_uid,
+	parent_comment_id,
+	user_id,
+	post_id,
+	body
+) VALUES (
+	:id!,
+	CASE WHEN :parentID::TEXT IS NULL THEN NULL 
+		ELSE (SELECT comment_id FROM comments WHERE comment_uid = :parentID)
+	END,
+	(SELECT user_id FROM users WHERE user_uid = :userID!),
+	(SELECT post_id FROM posts WHERE post_uid = :postID!),
+	:body!
+);
 
 /* 
-  @name drop
-  @param __ids -> (...)
+  @name remove
+  @param ids -> (...)
 */
-DELETE FROM comments WHERE comment_id in :__ids;
-
-
-/* @name test */
-SELECT createComment(:userId, :id, :body, :parentNode);
+DELETE FROM comments WHERE comment_uid in :ids;

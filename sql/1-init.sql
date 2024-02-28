@@ -112,18 +112,44 @@ CREATE TABLE post_user_views (
 );
 	
 CREATE TABLE comments (
-	node_id BIGINT UNIQUE REFERENCES nodes ON DELETE CASCADE,
 	comment_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	comment_uid TEXT NOT NULL UNIQUE,
 	user_id BIGINT REFERENCES users ON DELETE SET NULL,
+	post_id BIGINT NOT NULL REFERENCES posts ON DELETE CASCADE,
+	parent_comment_id BIGINT REFERENCES comments,
 	body TEXT NOT NULL,
-	created_at TIMESTAMPTZ DEFAULT now(),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 	edited_at TIMESTAMPTZ
 );
-CREATE INDEX comment_node ON comments USING HASH (node_id);
+CREATE INDEX comment_post ON comments USING HASH (post_id);
+CREATE INDEX comment_author ON comments USING HASH (user_id);
+CREATE INDEX comment_parent ON comments USING HASH (parent_comment_id);
 CREATE OR REPLACE TRIGGER comment_edit_log
 	BEFORE UPDATE ON comments
 	FOR EACH ROW EXECUTE FUNCTION updateEditTime();
+
+-- --------------------------------------------------------------- --
+--	                         EMOTES                                --
+-- --------------------------------------------------------------- --
+
+CREATE TABLE emotes (
+	emote_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+	emote_body TEXT NOT NULL
+);
+
+CREATE TABLE comment_emotes (
+	comment_id BIGINT REFERENCES comments ON DELETE CASCADE,
+	emote_id INT REFERENCES emotes ON DELETE CASCADE,
+	user_id BIGINT REFERENCES users ON DELETE CASCADE,
+	PRIMARY KEY (comment_id, user_id)
+);
+
+CREATE TABLE post_emotes (
+	post_id BIGINT REFERENCES posts ON DELETE CASCADE,
+	emote_id INT REFERENCES emotes ON DELETE CASCADE,
+	user_id BIGINT REFERENCES users ON DELETE CASCADE,
+	PRIMARY KEY (post_id, user_id)
+);
 
 -- --------------------------------------------------------------- --
 --	                    CATEGORIES & TAGS                          --
@@ -167,75 +193,6 @@ CREATE TABLE tag_category (
 	PRIMARY KEY (tag_id, category_id)
 );
 
--- --------------------------------------------------------------- --
---	                         EMOTES                                --
--- --------------------------------------------------------------- --
-
-CREATE TYPE emote_pack_sharing AS ENUM (
-	'open',
-	'invite',
-	'closed'
-);
-
-CREATE TABLE emote_packs (
-	emote_pack_id SERIAL PRIMARY KEY,
-	user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
-	pack_name TEXT NOT NULL,
-	thumbnail_url TEXT,
-	emote_pack_sharing emote_pack_sharing NOT NULL DEFAULT ('invite'),
-	UNIQUE (pack_name, user_id)
-);
-COMMENT ON COLUMN emote_packs.user_id IS 'Creator/Owner';
-
-CREATE TABLE emote_pack_access (
-	emote_pack_id INT NOT NULL REFERENCES emote_packs ON DELETE CASCADE,
-	user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
-	PRIMARY KEY (emote_pack_id, user_id)
-);
-
-CREATE TABLE emotes (
-	emote_id SERIAL PRIMARY KEY,
-	emote_pack_id INT NOT NULL REFERENCES emote_packs ON DELETE CASCADE,
-	keyword TEXT NOT NULL,
-	image_url TEXT NOT NULL UNIQUE,
-	created_at TIMESTAMPTZ DEFAULT now(),
-	edited_at TIMESTAMPTZ
-);
-CREATE INDEX emote_pack_member on emotes (emote_pack_id);
-CREATE INDEX emote_keyword ON emotes (keyword);
-CREATE OR REPLACE TRIGGER emote_edit_time 
-	BEFORE UPDATE ON emotes
-	FOR EACH ROW EXECUTE FUNCTION updateEditTime();
-
-
--- --------------------------------------------------------------- --
---	                     NODE ACCESSORIES                          --
--- --------------------------------------------------------------- --
-
-CREATE TABLE node_emotes (
-	node_id BIGINT REFERENCES nodes ON DELETE CASCADE,
-	user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
-	emote_id INT NOT NULL REFERENCES emotes ON DELETE CASCADE,
- 	created_at TIMESTAMPTZ DEFAULT now(),
-	PRIMARY KEY (node_id, user_id, emote_id)
-);
-
-CREATE TABLE node_tags (
-	node_id BIGINT REFERENCES nodes ON DELETE CASCADE,
-	tag_id INT REFERENCES tags,
-	PRIMARY KEY (node_id, tag_id)
-);
-
-CREATE TABLE node_categories (
-	node_id BIGINT REFERENCES nodes ON DELETE CASCADE,
-	category_id INT REFERENCES categories ON DELETE CASCADE,
-	PRIMARY KEY (node_id, category_id)
-);
-
-CREATE TABLE node_follows (
-	node_id BIGINT REFERENCES nodes ON DELETE CASCADE,
-	follower_id BIGINT REFERENCES users ON DELETE CASCADE
-);
 
 -- --------------------------------------------------------------- --
 --	                      USER INTERESTS                           --

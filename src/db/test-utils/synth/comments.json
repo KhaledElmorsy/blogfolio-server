@@ -1,0 +1,50 @@
+{
+  "type": "array",
+  "length": {
+    "type": "number",
+    "constant": 299
+  },
+  "content": {
+    "type": "object",
+    "comment_id": {
+      "type": "number",
+      "id": {}
+    },
+    "comment_uid": {
+      "type":"string",
+      "uuid": {}
+    },
+    "parent_comment_id": {
+      "type": "number",
+      "range": {
+        "high": 300,
+        "low": 1
+      },
+      "optional": true
+    },
+    "user_id": "@users.content.user_id",
+    "post_id": "@posts.content.post_id",
+    "body": {
+      "type": "string",
+      "faker": {
+        "generator": "bs"
+
+      }
+    },
+    "created_at": {
+      "type": "date_time",
+      "format": "%+",
+      "subtype": "date_time",
+      "begin": "2024-01-01T00:00:00+00:00",
+      "end": "2024-05-01T00:00:00+00:00"
+    },
+    "edited_at": {
+      "type": "date_time",
+      "format": "%+",
+      "subtype": "date_time",
+      "begin": "2024-01-01T00:00:00+00:00",
+      "end": "2024-05-01T00:00:00+00:00",
+      "optional": true
+    }
+  }
+}

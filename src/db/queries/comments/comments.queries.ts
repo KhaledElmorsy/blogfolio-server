@@ -1,23 +1,20 @@
 /** Types generated for queries found in "src/db/queries/comments/comments.sql" */
 import { PreparedQuery } from '@pgtyped/runtime';
 
-export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
+export type stringArray = (string)[];
 
 /** 'Tree' parameters type */
 export interface ITreeParams {
   depth?: number | null | void;
-  node: number;
+  postID?: string | null | void;
+  rootCommentID?: string | null | void;
 }
 
 /** 'Tree' return type */
 export interface ITreeResult {
-  body: Json | null;
-  createdAt: Date | null;
-  editedAt: Date | null;
-  id: string | null;
-  node: number | null;
-  parentNode: number | null;
-  user__id: number | null;
+  id: string;
+  parentPK: number | null;
+  pk: number;
 }
 
 /** 'Tree' query type */
@@ -26,79 +23,54 @@ export interface ITreeQuery {
   result: ITreeResult;
 }
 
-const treeIR: any = {"usedParamSet":{"node":true,"depth":true},"params":[{"name":"node","required":true,"transform":{"type":"scalar"},"locs":[{"a":169,"b":174}]},{"name":"depth","required":false,"transform":{"type":"scalar"},"locs":[{"a":389,"b":394},{"a":399,"b":404}]}],"statement":"WITH RECURSIVE comment_tree AS (\n\tSELECT 1 as depth, root.parent_node_id, rc.*\n\tFROM nodes root\n\tINNER JOIN comments rc on rc.node_id = root.node_id\n\tAND root.node_id = :node!\n\tUNION\n\tSELECT ct.depth+1 as n, child.parent_node_id, cc.*\n\tFROM nodes child\n\tINNER JOIN comments cc on cc.node_id = child.node_id\n\tINNER JOIN comment_tree ct ON child.parent_node_id = ct.node_id\n\tAND (ct.depth < :depth OR :depth IS NULL)\n) select \n\tparent_node_id as \"parentNode\",\n\tnode_id as node,\n\tcomment_uid as id,\n\tuser_id as \"user__id\",\n\tbody,\n\tcreated_at as \"createdAt\",\n\tedited_at as \"editedAt\"\nfrom comment_tree"};
+const treeIR: any = {"usedParamSet":{"postID":true,"rootCommentID":true,"depth":true},"params":[{"name":"postID","required":false,"transform":{"type":"scalar"},"locs":[{"a":200,"b":206},{"a":212,"b":218}]},{"name":"rootCommentID","required":false,"transform":{"type":"scalar"},"locs":[{"a":249,"b":262},{"a":267,"b":280}]},{"name":"depth","required":false,"transform":{"type":"scalar"},"locs":[{"a":456,"b":461},{"a":466,"b":471}]}],"statement":"WITH RECURSIVE comment_tree(comment_id, parent_comment_id, depth) AS (\n\tSELECT comment_id, parent_comment_id, 0\n\tFROM comments c\n\tWHERE \n\t\t(c.post_id = (SELECT post_id FROM posts p WHERE p.post_uid = :postID) OR :postID IS NULL)\n\tAND (comment_uid = :rootCommentID OR :rootCommentID IS NULL)\n\t\n\tUNION ALL\n\n\tSELECT c.comment_id, c.parent_comment_id, depth + 1\n\tFROM comments c\n\tINNER JOIN comment_tree ct ON ct.comment_id = c.parent_comment_id\n\tAND (depth < :depth OR :depth IS NULL) \n) SELECT co.comment_uid as \"id\", co.comment_id as \"pk\", co.parent_comment_id as \"parentPK\"\nFROM comment_tree ct\nINNER JOIN comments co ON ct.comment_id = co.comment_id"};
 
 /**
  * Query generated from SQL:
  * ```
- * WITH RECURSIVE comment_tree AS (
- * 	SELECT 1 as depth, root.parent_node_id, rc.*
- * 	FROM nodes root
- * 	INNER JOIN comments rc on rc.node_id = root.node_id
- * 	AND root.node_id = :node!
- * 	UNION
- * 	SELECT ct.depth+1 as n, child.parent_node_id, cc.*
- * 	FROM nodes child
- * 	INNER JOIN comments cc on cc.node_id = child.node_id
- * 	INNER JOIN comment_tree ct ON child.parent_node_id = ct.node_id
- * 	AND (ct.depth < :depth OR :depth IS NULL)
- * ) select 
- * 	parent_node_id as "parentNode",
- * 	node_id as node,
- * 	comment_uid as id,
- * 	user_id as "user__id",
- * 	body,
- * 	created_at as "createdAt",
- * 	edited_at as "editedAt"
- * from comment_tree
+ * WITH RECURSIVE comment_tree(comment_id, parent_comment_id, depth) AS (
+ * 	SELECT comment_id, parent_comment_id, 0
+ * 	FROM comments c
+ * 	WHERE 
+ * 		(c.post_id = (SELECT post_id FROM posts p WHERE p.post_uid = :postID) OR :postID IS NULL)
+ * 	AND (comment_uid = :rootCommentID OR :rootCommentID IS NULL)
+ * 	
+ * 	UNION ALL
+ * 
+ * 	SELECT c.comment_id, c.parent_comment_id, depth + 1
+ * 	FROM comments c
+ * 	INNER JOIN comment_tree ct ON ct.comment_id = c.parent_comment_id
+ * 	AND (depth < :depth OR :depth IS NULL) 
+ * ) SELECT co.comment_uid as "id", co.comment_id as "pk", co.parent_comment_id as "parentPK"
+ * FROM comment_tree ct
+ * INNER JOIN comments co ON ct.comment_id = co.comment_id
  * ```
  */
 export const tree = new PreparedQuery<ITreeParams,ITreeResult>(treeIR);
 
 
-/** 'GetId' parameters type */
-export interface IGetIdParams {
-  id: string;
-}
-
-/** 'GetId' return type */
-export interface IGetIdResult {
-  __id: number;
-}
-
-/** 'GetId' query type */
-export interface IGetIdQuery {
-  params: IGetIdParams;
-  result: IGetIdResult;
-}
-
-const getIdIR: any = {"usedParamSet":{"id":true},"params":[{"name":"id","required":true,"transform":{"type":"scalar"},"locs":[{"a":62,"b":65}]}],"statement":"SELECT comment_id as \"__id\" FROM comments WHERE comment_uid = :id!"};
-
-/**
- * Query generated from SQL:
- * ```
- * SELECT comment_id as "__id" FROM comments WHERE comment_uid = :id!
- * ```
- */
-export const getId = new PreparedQuery<IGetIdParams,IGetIdResult>(getIdIR);
-
-
 /** 'Find' parameters type */
 export interface IFindParams {
-  __id?: number | null | void;
-  id?: string | null | void;
-  node?: number | null | void;
-  user__id?: number | null | void;
+  ids?: stringArray | null | void;
+  limit?: number | null | void;
+  nextID?: string | null | void;
+  popular?: boolean | null | void;
+  postID?: string | null | void;
+  slug?: string | null | void;
+  userID?: string | null | void;
+  username?: string | null | void;
 }
 
 /** 'Find' return type */
 export interface IFindResult {
-  body: Json | null;
-  createdAt: Date | null;
+  body: string;
+  createdAt: Date;
   editedAt: Date | null;
+  emotes: number;
   id: string;
-  node: number | null;
-  userId: string;
+  parentID: string | null;
+  postID: string;
+  userID: string | null;
 }
 
 /** 'Find' query type */
@@ -107,99 +79,139 @@ export interface IFindQuery {
   result: IFindResult;
 }
 
-const findIR: any = {"usedParamSet":{"__id":true,"id":true,"node":true,"user__id":true},"params":[{"name":"__id","required":false,"transform":{"type":"scalar"},"locs":[{"a":232,"b":236},{"a":241,"b":245}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":279,"b":281},{"a":286,"b":288}]},{"name":"node","required":false,"transform":{"type":"scalar"},"locs":[{"a":318,"b":322},{"a":327,"b":331}]},{"name":"user__id","required":false,"transform":{"type":"scalar"},"locs":[{"a":361,"b":369},{"a":374,"b":382}]}],"statement":"SELECT \n  c.comment_uid as id,\n  u.user_uid as \"userId\",\n  c.body,\n  c.node_id as node,\n  c.created_at as \"createdAt\",\n  c.edited_at as \"editedAt\"\nFROM comments c\nINNER JOIN users u ON c.user_id = u.user_id\nWHERE \n  (c.comment_id = :__id OR :__id is NULL)\n  AND (c.comment_uid = :id OR :id is NULL)\n  AND (c.node_id = :node OR :node is NULL)\n  AND (c.user_id = :user__id OR :user__id is NULL)"};
+const findIR: any = {"usedParamSet":{"ids":true,"userID":true,"postID":true,"username":true,"slug":true,"nextID":true,"popular":true,"limit":true},"params":[{"name":"ids","required":false,"transform":{"type":"scalar"},"locs":[{"a":489,"b":492},{"a":498,"b":501}]},{"name":"userID","required":false,"transform":{"type":"scalar"},"locs":[{"a":579,"b":585},{"a":591,"b":597}]},{"name":"postID","required":false,"transform":{"type":"scalar"},"locs":[{"a":675,"b":681},{"a":687,"b":693}]},{"name":"username","required":false,"transform":{"type":"scalar"},"locs":[{"a":771,"b":779},{"a":785,"b":793}]},{"name":"slug","required":false,"transform":{"type":"scalar"},"locs":[{"a":867,"b":871},{"a":877,"b":881}]},{"name":"nextID","required":false,"transform":{"type":"scalar"},"locs":[{"a":899,"b":905},{"a":1031,"b":1037},{"a":1043,"b":1049},{"a":1316,"b":1322},{"a":1356,"b":1362},{"a":1407,"b":1413}]},{"name":"popular","required":false,"transform":{"type":"scalar"},"locs":[{"a":937,"b":944},{"a":1336,"b":1343},{"a":1382,"b":1389},{"a":1448,"b":1455}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":1583,"b":1588}]}],"statement":"SELECT \n  comment_uid as id,\n\t(SELECT user_uid FROM users u WHERE u.user_id = c.user_id) as \"userID\",\n\t(SELECT comment_uid FROM comments sc WHERE sc.comment_id = c.parent_comment_id) as \"parentID\",\n\t(SELECT post_uid FROM posts p WHERE p.post_id = c.post_id) as \"postID!\",\n  body,\n  created_at as \"createdAt\",\n  edited_at as \"editedAt\",\n\tCOALESCE(count(ce.comment_id),0) as \"emotes!\"\nFROM comments c\nLEFT JOIN comment_emotes ce ON c.comment_id = ce.comment_id\nWHERE \n   (comment_uid = ANY (:ids) OR :ids is NULL)\n  AND (c.user_id = (SELECT user_id FROM users u WHERE u.user_uid = :userID) OR :userID IS NULL)\n  AND (c.post_id = (SELECT post_id FROM posts p WHERE p.post_uid = :postID) OR :postID IS NULL)\n  AND (c.user_id = (SELECT user_id FROM users u WHERE u.username = :username) OR :username IS NULL)\n  AND (c.post_id = (SELECT post_id FROM posts p WHERE p.slug = :slug) OR :slug IS NULL)\n\tAND ( :nextID::TEXT IS NULL OR \n\t\tCASE WHEN :popular THEN  TRUE ELSE \n\t(created_at < (SELECT created_at FROM comments WHERE comment_uid = :nextID) OR :nextID IS NULL)\n\tEND)\nGROUP BY c.comment_id, id, \"userID\", \"parentID\", \"postID!\", body, \"createdAt\", \"editedAt\"\nHAVING (count(ce.comment_id) < (\n\tSELECT count(ce.comment_id) FROM comment_emotes ce WHERE comment_id = (\n\t\tSELECT comment_id FROM comments WHERE comment_uid = :nextID \n\t)\n)) OR ((:popular IS NULL OR :nextID IS NULL) AND NOT (:popular IS NOT NULL AND :nextID IS NOT NULL))\nORDER BY CASE WHEN :popular THEN (SELECT count(ce.comment_id) FROM comment_emotes ce WHERE ce.comment_id = c.comment_id) END DESC,\n\tcreated_at DESC\nLIMIT :limit"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT 
- *   c.comment_uid as id,
- *   u.user_uid as "userId",
- *   c.body,
- *   c.node_id as node,
- *   c.created_at as "createdAt",
- *   c.edited_at as "editedAt"
+ *   comment_uid as id,
+ * 	(SELECT user_uid FROM users u WHERE u.user_id = c.user_id) as "userID",
+ * 	(SELECT comment_uid FROM comments sc WHERE sc.comment_id = c.parent_comment_id) as "parentID",
+ * 	(SELECT post_uid FROM posts p WHERE p.post_id = c.post_id) as "postID!",
+ *   body,
+ *   created_at as "createdAt",
+ *   edited_at as "editedAt",
+ * 	COALESCE(count(ce.comment_id),0) as "emotes!"
  * FROM comments c
- * INNER JOIN users u ON c.user_id = u.user_id
+ * LEFT JOIN comment_emotes ce ON c.comment_id = ce.comment_id
  * WHERE 
- *   (c.comment_id = :__id OR :__id is NULL)
- *   AND (c.comment_uid = :id OR :id is NULL)
- *   AND (c.node_id = :node OR :node is NULL)
- *   AND (c.user_id = :user__id OR :user__id is NULL)
+ *    (comment_uid = ANY (:ids) OR :ids is NULL)
+ *   AND (c.user_id = (SELECT user_id FROM users u WHERE u.user_uid = :userID) OR :userID IS NULL)
+ *   AND (c.post_id = (SELECT post_id FROM posts p WHERE p.post_uid = :postID) OR :postID IS NULL)
+ *   AND (c.user_id = (SELECT user_id FROM users u WHERE u.username = :username) OR :username IS NULL)
+ *   AND (c.post_id = (SELECT post_id FROM posts p WHERE p.slug = :slug) OR :slug IS NULL)
+ * 	AND ( :nextID::TEXT IS NULL OR 
+ * 		CASE WHEN :popular THEN  TRUE ELSE 
+ * 	(created_at < (SELECT created_at FROM comments WHERE comment_uid = :nextID) OR :nextID IS NULL)
+ * 	END)
+ * GROUP BY c.comment_id, id, "userID", "parentID", "postID!", body, "createdAt", "editedAt"
+ * HAVING (count(ce.comment_id) < (
+ * 	SELECT count(ce.comment_id) FROM comment_emotes ce WHERE comment_id = (
+ * 		SELECT comment_id FROM comments WHERE comment_uid = :nextID 
+ * 	)
+ * )) OR ((:popular IS NULL OR :nextID IS NULL) AND NOT (:popular IS NOT NULL AND :nextID IS NOT NULL))
+ * ORDER BY CASE WHEN :popular THEN (SELECT count(ce.comment_id) FROM comment_emotes ce WHERE ce.comment_id = c.comment_id) END DESC,
+ * 	created_at DESC
+ * LIMIT :limit
  * ```
  */
 export const find = new PreparedQuery<IFindParams,IFindResult>(findIR);
 
 
-/** 'Edit' parameters type */
-export interface IEditParams {
-  body: Json;
-  id: number;
+/** 'Update' parameters type */
+export interface IUpdateParams {
+  body: string;
+  id: string;
 }
 
-/** 'Edit' return type */
-export type IEditResult = void;
+/** 'Update' return type */
+export type IUpdateResult = void;
 
-/** 'Edit' query type */
-export interface IEditQuery {
-  params: IEditParams;
-  result: IEditResult;
+/** 'Update' query type */
+export interface IUpdateQuery {
+  params: IUpdateParams;
+  result: IUpdateResult;
 }
 
-const editIR: any = {"usedParamSet":{"body":true,"id":true},"params":[{"name":"body","required":true,"transform":{"type":"scalar"},"locs":[{"a":28,"b":33}]},{"name":"id","required":true,"transform":{"type":"scalar"},"locs":[{"a":54,"b":57}]}],"statement":"UPDATE comments \nSET body = :body!\nWHERE comment_id = :id!"};
+const updateIR: any = {"usedParamSet":{"body":true,"id":true},"params":[{"name":"body","required":true,"transform":{"type":"scalar"},"locs":[{"a":28,"b":33}]},{"name":"id","required":true,"transform":{"type":"scalar"},"locs":[{"a":55,"b":58}]}],"statement":"UPDATE comments \nSET body = :body!\nWHERE comment_uid = :id!"};
 
 /**
  * Query generated from SQL:
  * ```
  * UPDATE comments 
  * SET body = :body!
- * WHERE comment_id = :id!
+ * WHERE comment_uid = :id!
  * ```
  */
-export const edit = new PreparedQuery<IEditParams,IEditResult>(editIR);
+export const update = new PreparedQuery<IUpdateParams,IUpdateResult>(updateIR);
 
 
-/** 'Drop' parameters type */
-export interface IDropParams {
-  __ids: readonly (number | null | void)[];
+/** 'Insert' parameters type */
+export interface IInsertParams {
+  body: string;
+  id: string;
+  parentID?: string | null | void;
+  postID: string;
+  userID: string;
 }
 
-/** 'Drop' return type */
-export type IDropResult = void;
+/** 'Insert' return type */
+export type IInsertResult = void;
 
-/** 'Drop' query type */
-export interface IDropQuery {
-  params: IDropParams;
-  result: IDropResult;
+/** 'Insert' query type */
+export interface IInsertQuery {
+  params: IInsertParams;
+  result: IInsertResult;
 }
 
-const dropIR: any = {"usedParamSet":{"__ids":true},"params":[{"name":"__ids","required":false,"transform":{"type":"array_spread"},"locs":[{"a":41,"b":46}]}],"statement":"DELETE FROM comments WHERE comment_id in :__ids"};
+const insertIR: any = {"usedParamSet":{"id":true,"parentID":true,"userID":true,"postID":true,"body":true},"params":[{"name":"id","required":true,"transform":{"type":"scalar"},"locs":[{"a":95,"b":98}]},{"name":"parentID","required":false,"transform":{"type":"scalar"},"locs":[{"a":112,"b":120},{"a":207,"b":215}]},{"name":"userID","required":true,"transform":{"type":"scalar"},"locs":[{"a":269,"b":276}]},{"name":"postID","required":true,"transform":{"type":"scalar"},"locs":[{"a":325,"b":332}]},{"name":"body","required":true,"transform":{"type":"scalar"},"locs":[{"a":337,"b":342}]}],"statement":"INSERT INTO comments (\n\tcomment_uid,\n\tparent_comment_id,\n\tuser_id,\n\tpost_id,\n\tbody\n) VALUES (\n\t:id!,\n\tCASE WHEN :parentID::TEXT IS NULL THEN NULL \n\t\tELSE (SELECT comment_id FROM comments WHERE comment_uid = :parentID)\n\tEND,\n\t(SELECT user_id FROM users WHERE user_uid = :userID!),\n\t(SELECT post_id FROM posts WHERE post_uid = :postID!),\n\t:body!\n)"};
 
 /**
  * Query generated from SQL:
  * ```
- * DELETE FROM comments WHERE comment_id in :__ids
+ * INSERT INTO comments (
+ * 	comment_uid,
+ * 	parent_comment_id,
+ * 	user_id,
+ * 	post_id,
+ * 	body
+ * ) VALUES (
+ * 	:id!,
+ * 	CASE WHEN :parentID::TEXT IS NULL THEN NULL 
+ * 		ELSE (SELECT comment_id FROM comments WHERE comment_uid = :parentID)
+ * 	END,
+ * 	(SELECT user_id FROM users WHERE user_uid = :userID!),
+ * 	(SELECT post_id FROM posts WHERE post_uid = :postID!),
+ * 	:body!
+ * )
  * ```
  */
-export const drop = new PreparedQuery<IDropParams,IDropResult>(dropIR);
+export const insert = new PreparedQuery<IInsertParams,IInsertResult>(insertIR);
 
 
-/** Query 'Test' is invalid, so its result is assigned type 'never'.
- *  */
-export type ITestResult = never;
+/** 'Remove' parameters type */
+export interface IRemoveParams {
+  ids: readonly (string | null | void)[];
+}
 
-/** Query 'Test' is invalid, so its parameters are assigned type 'never'.
- *  */
-export type ITestParams = never;
+/** 'Remove' return type */
+export type IRemoveResult = void;
 
-const testIR: any = {"usedParamSet":{"userId":true,"id":true,"body":true,"parentNode":true},"params":[{"name":"userId","required":false,"transform":{"type":"scalar"},"locs":[{"a":21,"b":27}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":30,"b":32}]},{"name":"body","required":false,"transform":{"type":"scalar"},"locs":[{"a":35,"b":39}]},{"name":"parentNode","required":false,"transform":{"type":"scalar"},"locs":[{"a":42,"b":52}]}],"statement":"SELECT createComment(:userId, :id, :body, :parentNode)"};
+/** 'Remove' query type */
+export interface IRemoveQuery {
+  params: IRemoveParams;
+  result: IRemoveResult;
+}
+
+const removeIR: any = {"usedParamSet":{"ids":true},"params":[{"name":"ids","required":false,"transform":{"type":"array_spread"},"locs":[{"a":42,"b":45}]}],"statement":"DELETE FROM comments WHERE comment_uid in :ids"};
 
 /**
  * Query generated from SQL:
  * ```
- * SELECT createComment(:userId, :id, :body, :parentNode)
+ * DELETE FROM comments WHERE comment_uid in :ids
  * ```
  */
-export const test = new PreparedQuery<ITestParams,ITestResult>(testIR);
+export const remove = new PreparedQuery<IRemoveParams,IRemoveResult>(removeIR);
 
 
