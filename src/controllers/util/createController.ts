@@ -232,7 +232,9 @@ export default function createController<
         res.json(serverError);
         return;
       }
-      res.json(responseParseResult.data);
+      res
+        .status(responseParseResult.data.status)
+        .json(responseParseResult.data.body);
     };
   });
 
