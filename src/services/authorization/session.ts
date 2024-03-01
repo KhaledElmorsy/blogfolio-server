@@ -4,7 +4,9 @@ import ms from 'ms';
 import { createSessionID } from './utils';
 
 if (process.env.SESSION_DURATION === undefined) {
-  throw new Error('Session duration env variable not defined');
+  console.warn(
+    'Session duration env variable not defined. Using placeholder value.',
+  );
 }
 
 export async function checkSession(sessionID: string) {

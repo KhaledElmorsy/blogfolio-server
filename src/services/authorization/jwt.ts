@@ -1,15 +1,17 @@
 import jsonwebtoken from 'jsonwebtoken';
 
 if (process.env.JWT_SECRET === undefined) {
-  throw new Error('JWT secret env variable not defined.');
+  console.warn('JWT secret env variable not defined. Using placeholder value.');
 }
 
 if (process.env.JWT_DURATION === undefined) {
-  throw new Error('JWT duration env variable not defined.');
+  console.warn(
+    'JWT duration env variable not defined. Using placeholder value.',
+  );
 }
 
-const secret = process.env.JWT_SECRET;
-const duration = process.env.JWT_DURATION;
+const secret = process.env.JWT_SECRET ?? 'Secret-key';
+const duration = process.env.JWT_DURATION ?? '5m';
 
 type Payload = {
   userID: string;
