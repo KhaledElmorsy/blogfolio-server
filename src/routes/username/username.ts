@@ -8,8 +8,6 @@ import { posts } from './posts';
  */
 const router = Router();
 
-router.get('/:username', User.GetUsername);
-
-router.use('/:username/posts', posts);
+router.use('/:username/posts', User.CheckUsername, posts);
 
 export default router;
