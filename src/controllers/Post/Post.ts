@@ -160,4 +160,18 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
 
     return createResponse(codes.success.Ok, {});
   },
+
+  async CheckSlug(
+    { params: { username, slug } },
+    { createResponse, createError, codes },
+  ) {
+    const exists = await Post.getBySlug(slug, username);
+    if (!exists) {
+      return createResponse(codes.error.NotFound, {
+        errors: [createError(error.Post.NotFound, { slug })],
+      });
+    }
+
+    return undefined as any;
+  },
 }));

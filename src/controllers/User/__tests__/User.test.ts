@@ -540,13 +540,13 @@ describe('Post', () => {
   });
 });
 
-describe('GetUsername', () => {
+describe('CheckUsername', () => {
   test('Username doesnt exist: HTTP Error Not found. Responds with username', async () => {
     vi.spyOn(userService, 'findMissing').mockImplementation(async () => [
       { username: 'test' },
     ]);
     const username = 'testUsername';
-    const response = await User.GetUsername({ params: { username } });
+    const response = await User.CheckUsername({ params: { username } });
     expect(response.status).toBe(ErrorCode.NotFound);
     if (response.status === ErrorCode.NotFound) {
       expect(response.body.errors[0]).toMatchObject({
@@ -554,13 +554,6 @@ describe('GetUsername', () => {
         data: { username },
       });
     }
-  });
-
-  test('Username exists: HTTP Success Ok', async () => {
-    vi.spyOn(userService, 'findMissing').mockImplementation(async () => []);
-    const username = 'testUsername';
-    const response = await User.GetUsername({ params: { username } });
-    expect(response.status).toBe(SuccessCode.Ok);
   });
 });
 

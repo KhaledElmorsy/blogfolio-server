@@ -104,7 +104,7 @@ export default createController('User', endPoints, (errors) => ({
     return createResponse(codes.success.Ok, { data: { result: doesFollow } });
   },
 
-  async GetUsername(
+  async CheckUsername(
     { params: { username } },
     { createResponse, createError, codes },
   ) {
@@ -114,7 +114,8 @@ export default createController('User', endPoints, (errors) => ({
         errors: [createError(errors.User.UserNotFound, { username })],
       });
     }
-    return createResponse(codes.success.Ok, {});
+
+    return undefined as any;
   },
 
   async Post({ body }, { codes, createResponse, createError }) {

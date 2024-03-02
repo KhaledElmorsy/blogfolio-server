@@ -470,3 +470,20 @@ describe('Delete', () => {
     expect(response.status).toBe(SuccessCode.Ok);
   });
 });
+
+describe('CheckSlug', () => {
+  test('Slug/user combo doesnt exist: HTTP Error Not found. Respond with slug.', async () => {
+    vi.spyOn(postService, 'getBySlug').mockResolvedValue(undefined);
+    const slug = 'slug';
+    const response = await Post.CheckSlug({
+      params: { slug, username: 'username' },
+    });
+    expect(response.status).toBe(ErrorCode.NotFound);
+    if (response.status === ErrorCode.NotFound) {
+      expect(response.body.errors[0]).toMatchObject({
+        ...errorIDs.Post.NotFound,
+        data: { slug },
+      });
+    }
+  });
+});
