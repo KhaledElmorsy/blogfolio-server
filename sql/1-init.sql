@@ -137,19 +137,23 @@ CREATE TABLE emotes (
 	emote_body TEXT NOT NULL
 );
 
+INSERT INTO emotes (emote_body) VALUES ('👍'),('😊'),('😂'),('❤️'),('🤩');
+
 CREATE TABLE comment_emotes (
-	comment_id BIGINT REFERENCES comments ON DELETE CASCADE,
-	emote_id INT REFERENCES emotes ON DELETE CASCADE,
-	user_id BIGINT REFERENCES users ON DELETE CASCADE,
+	comment_id BIGINT NOT NULL REFERENCES comments ON DELETE CASCADE,
+	emote_id INT NOT NULL REFERENCES emotes ON DELETE CASCADE,
+	user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
 	PRIMARY KEY (comment_id, user_id)
 );
+CREATE INDEX comment_emote_id ON comment_emotes USING HASH (comment_id);
 
 CREATE TABLE post_emotes (
-	post_id BIGINT REFERENCES posts ON DELETE CASCADE,
-	emote_id INT REFERENCES emotes ON DELETE CASCADE,
-	user_id BIGINT REFERENCES users ON DELETE CASCADE,
+	post_id BIGINT NOT NULL REFERENCES posts ON DELETE CASCADE,
+	emote_id INT NOT NULL REFERENCES emotes ON DELETE CASCADE,
+	user_id BIGINT NOT NULL REFERENCES users ON DELETE CASCADE,
 	PRIMARY KEY (post_id, user_id)
 );
+CREATE INDEX post_emote_id ON post_emotes USING HASH (post_id);
 
 -- --------------------------------------------------------------- --
 --	                    CATEGORIES & TAGS                          --
