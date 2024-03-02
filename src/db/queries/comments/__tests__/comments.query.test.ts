@@ -19,6 +19,7 @@ beforeAll(async () => {
       ['users', 'nodes', 'posts', 'comments', 'emotes', 'comment_emotes'],
       {
         comments: { comment_id: true },
+        emotes: { emote_id: true },
       },
     ),
   );
