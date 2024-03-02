@@ -1,1 +1,1 @@
-export * as comment from './comment'
+export * as comment from './comment';

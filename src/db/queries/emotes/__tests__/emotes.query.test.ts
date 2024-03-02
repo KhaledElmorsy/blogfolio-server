@@ -294,4 +294,4 @@ describe('removeFromComment', () => {
     );
     expect(updatedEmoteQuery.rowCount).toBe(0);
   });
-})
+});
