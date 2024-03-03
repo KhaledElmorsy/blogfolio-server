@@ -148,3 +148,14 @@ describe('generateID()', () => {
     expect(id).toBe(availableID);
   });
 });
+
+describe('findMissingIDs', () => {
+  it('Returns IDs that dont exist in the DB', async () => {
+    const realIDs = ['real1', 'real2'];
+    const dbReturn = realIDs.map((id) => ({ id }));
+    const fakeIDs = ['fake1', 'fake2'];
+    vi.spyOn(commentDB.find, 'run').mockResolvedValue(dbReturn as any);
+    const missingIDs = await comment.findMissingIDs(realIDs.concat(fakeIDs));
+    expect(missingIDs.sort()).toEqual(fakeIDs.sort());
+  });
+});

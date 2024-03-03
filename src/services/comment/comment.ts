@@ -54,3 +54,10 @@ export async function generateID() {
   } while (IDTaken);
   return commentID;
 }
+
+export async function findMissingIDs(commentIDs: string[]) {
+  const foundComments = await commentDB.find.run({ ids: commentIDs }, pool);
+  const foundIDs = foundComments.map(({ id }) => id);
+  const foundIDSet = new Set(foundIDs);
+  return commentIDs.filter((id) => !foundIDSet.has(id));
+}
