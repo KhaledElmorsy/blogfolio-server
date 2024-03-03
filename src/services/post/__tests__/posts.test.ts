@@ -312,3 +312,14 @@ describe('checkSlug()', () => {
     expect(dbFindSpy.mock.calls[0][0]).toMatchObject({ userID, slug });
   });
 });
+
+describe('findMissingIDs', () => {
+  it('Returns IDs that dont exist in the DB', async () => {
+    const existingIDs = ['test1', 'test2'];
+    const dbOutput = existingIDs.map((id) => ({ id }));
+    const fakeIDs = ['fake1', 'fake2'];
+    vi.spyOn(postDB.checkIDs, 'run').mockResolvedValue(dbOutput);
+    const missingIDs = await posts.findMissingIDs(existingIDs.concat(fakeIDs));
+    expect(missingIDs.sort()).toEqual(fakeIDs.sort());
+  });
+});

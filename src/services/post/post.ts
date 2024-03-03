@@ -140,3 +140,11 @@ export async function checkSlug(userID: string, slug: string) {
   const posts = await postDB.find.run({ userID, slug }, pool);
   return !posts.length;
 }
+
+export async function findMissingIDs(postIDs: string[]) {
+  const foundIDs = (await postDB.checkIDs.run({ postIDs }, pool)).map(
+    ({ id }) => id,
+  );
+  const foundIDSet = new Set(foundIDs);
+  return postIDs.filter((id) => !foundIDSet.has(id));
+}
