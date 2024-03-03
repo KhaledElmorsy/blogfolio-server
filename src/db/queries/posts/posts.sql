@@ -70,3 +70,6 @@ WHERE post_uid = :id;
   @param ids -> (...)
 */
 DELETE FROM posts WHERE post_uid IN :ids;
+
+/* @name checkIDs */
+SELECT post_uid as id FROM posts WHERE post_uid = ANY (:postIDs);

@@ -267,3 +267,19 @@ describe('remove()', () => {
     expect(dbPosts.rowCount).toBe(0);
   });
 });
+
+describe('checkIDs', () => {
+  it('Gets all existing IDs in the passed array', async () => {
+    const existingPosts = testData.posts.slice(0, 10);
+    const existingPostIDs = existingPosts.map(({ post_uid }) => post_uid);
+    const fakeIDs = ['not-real', 'not-real2', 'who-is-this'];
+    const queryPosts = await postsDB.checkIDs.run(
+      {
+        postIDs: existingPostIDs.concat(fakeIDs),
+      },
+      client,
+    );
+    const queryIDs = queryPosts.map(({ id }) => id);
+    expect(queryIDs.sort()).toEqual(existingPostIDs.sort());
+  });
+});

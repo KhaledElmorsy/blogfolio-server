@@ -1,6 +1,8 @@
 /** Types generated for queries found in "src/db/queries/posts/posts.sql" */
 import { PreparedQuery } from '@pgtyped/runtime';
 
+export type stringArray = (string)[];
+
 /** 'Find' parameters type */
 export interface IFindParams {
   id?: string | null | void;
@@ -232,5 +234,32 @@ const removeIR: any = {"usedParamSet":{"ids":true},"params":[{"name":"ids","requ
  * ```
  */
 export const remove = new PreparedQuery<IRemoveParams,IRemoveResult>(removeIR);
+
+
+/** 'CheckIDs' parameters type */
+export interface ICheckIDsParams {
+  postIDs?: stringArray | null | void;
+}
+
+/** 'CheckIDs' return type */
+export interface ICheckIDsResult {
+  id: string;
+}
+
+/** 'CheckIDs' query type */
+export interface ICheckIDsQuery {
+  params: ICheckIDsParams;
+  result: ICheckIDsResult;
+}
+
+const checkIDsIR: any = {"usedParamSet":{"postIDs":true},"params":[{"name":"postIDs","required":false,"transform":{"type":"scalar"},"locs":[{"a":55,"b":62}]}],"statement":"SELECT post_uid as id FROM posts WHERE post_uid = ANY (:postIDs)"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT post_uid as id FROM posts WHERE post_uid = ANY (:postIDs)
+ * ```
+ */
+export const checkIDs = new PreparedQuery<ICheckIDsParams,ICheckIDsResult>(checkIDsIR);
 
 
