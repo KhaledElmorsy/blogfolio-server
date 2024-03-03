@@ -82,3 +82,8 @@ export function removeFromComment({
 }) {
   return emoteDB.removeFromComment.run({ commentID, userID }, pool);
 }
+
+export async function checkEmoteExists(emoteID: number) {
+  const emotes = await emoteDB.getEmotes.run(undefined, pool);
+  return Boolean(emotes.find((emote) => emote.id === emoteID));
+}

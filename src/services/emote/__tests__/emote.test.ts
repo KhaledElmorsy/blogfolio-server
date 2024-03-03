@@ -153,3 +153,21 @@ describe('removeFromComment', () => {
     });
   });
 });
+
+describe('checkEmoteExists', () => {
+  it('Returns true if the emote ID exists', async () => {
+    const realID = 1;
+    const dbEmotes = [{ id: realID, body: '👍' }];
+    vi.spyOn(emoteDB.getEmotes, 'run').mockResolvedValue(dbEmotes);
+    const emoteExists = await emote.checkEmoteExists(realID);
+    expect(emoteExists).toBe(true);
+  });
+
+  it('Returns false if the emote ID doesnt exist', async () => {
+    const fakeID = 1;
+    const dbEmotes = [{ id: fakeID + 1, body: '👍' }];
+    vi.spyOn(emoteDB.getEmotes, 'run').mockResolvedValue(dbEmotes);
+    const emoteExists = await emote.checkEmoteExists(fakeID);
+    expect(emoteExists).toBe(false);
+  });
+});
