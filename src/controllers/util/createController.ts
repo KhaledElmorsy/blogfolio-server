@@ -208,7 +208,7 @@ export default function createController<
         );
       } catch (err) {
         log(err);
-        res.json(serverError);
+        res.status(ErrorCode.InternalServerError).json(serverError);
       }
 
       if (response === undefined) {
@@ -219,7 +219,7 @@ export default function createController<
       const responseParseResult = endpointSchema.response.safeParse(response);
       if (!responseParseResult.success) {
         log(responseParseResult.error);
-        res.json(serverError);
+        res.status(ErrorCode.InternalServerError).json(serverError);
         return;
       }
       res
