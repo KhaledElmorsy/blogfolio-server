@@ -7,7 +7,6 @@ import { InferEndpoint, Endpoint } from '@blogfolio/types/Endpoint';
 import {
   SuccessCode,
   ErrorCode,
-  ResponseBodyStatus,
   Response,
   FailureResponse,
 } from '@blogfolio/types/Response';
@@ -36,17 +35,10 @@ function ResGenFactory<R extends Response>() {
   return function createResponse<
     S extends R['status'],
     B extends Extract<R, { status: S }>['body'],
-  >(code: S, bodyData: Omit<B, 'status'>) {
-    const isError = !!Object.values(ErrorCode).includes(code as ErrorCode);
-    const resBodyStatus = isError
-      ? ResponseBodyStatus.failure
-      : ResponseBodyStatus.success;
+  >(code: S, body: B) {
     return {
       status: code,
-      body: {
-        status: resBodyStatus as B['status'],
-        ...bodyData,
-      },
+      body,
     };
   };
 }
@@ -119,7 +111,6 @@ ErrorCode.InternalServerError,
 > = {
   status: ErrorCode.InternalServerError,
   body: {
-    status: ResponseBodyStatus.failure,
     errors: [createError(errorIDs.General.ServerError)],
   },
 };
@@ -195,7 +186,6 @@ export default function createController<
         res.json({
           status: ErrorCode.BadRequest,
           body: {
-            status: ResponseBodyStatus.failure,
             errors: mapZodError(requestParseResult.error),
           },
         });

@@ -94,7 +94,7 @@ describe('Get:', () => {
         'id' as keyof typeof user,
       ].reduce((obj, key) => ({ ...obj, [key]: user[key] }), {});
 
-      expect(response.body).toMatchObject({ data: { user: returnedUserData } });
+      expect(response.body).toMatchObject({ user: returnedUserData });
     }
   });
 });
@@ -121,19 +121,16 @@ describe('GetFollowers', () => {
     expect(response).toMatchInlineSnapshot(`
       {
         "body": {
-          "data": {
-            "users": [
-              {
-                "id": "${testUsers[0].id}",
-                "username": "${testUsers[0].username}",
-              },
-              {
-                "id": "${testUsers[1].id}",
-                "username": "${testUsers[1].username}",
-              },
-            ],
-          },
-          "status": "success",
+          "users": [
+            {
+              "id": "${testUsers[0].id}",
+              "username": "${testUsers[0].username}",
+            },
+            {
+              "id": "${testUsers[1].id}",
+              "username": "${testUsers[1].username}",
+            },
+          ],
         },
         "status": ${SuccessCode.Ok},
       }
@@ -164,21 +161,18 @@ describe('GetFollows', () => {
     expect(response).toMatchInlineSnapshot(`
       {
         "body": {
-          "data": {
-            "users": [
-              {
-                "bio": ${testUsers[0].bio},
-                "id": "${testUsers[0].id}",
-                "username": "${testUsers[0].username}",
-              },
-              {
-                "bio": ${testUsers[1].bio},
-                "id": "${testUsers[1].id}",
-                "username": "${testUsers[1].username}",
-              },
-            ],
-          },
-          "status": "success",
+          "users": [
+            {
+              "bio": ${testUsers[0].bio},
+              "id": "${testUsers[0].id}",
+              "username": "${testUsers[0].username}",
+            },
+            {
+              "bio": ${testUsers[1].bio},
+              "id": "${testUsers[1].id}",
+              "username": "${testUsers[1].username}",
+            },
+          ],
         },
         "status": ${SuccessCode.Ok},
       }
@@ -196,7 +190,7 @@ describe('GetExistsEmail', () => {
       params: { email: testEmail },
     });
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.result).toBe(true);
+      expect(response.body.result).toBe(true);
     }
   });
   test('Email doesnt exist: HTTP Success and falsey result', async () => {
@@ -207,7 +201,7 @@ describe('GetExistsEmail', () => {
     expect(findUserDb).toHaveBeenCalled();
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.result).toBe(false);
+      expect(response.body.result).toBe(false);
     }
   });
 });
@@ -225,7 +219,7 @@ describe('GetExistsUsername', () => {
     });
     expect(findUserDb).toHaveBeenCalled();
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.result).toBe(true);
+      expect(response.body.result).toBe(true);
     }
   });
   test('Username doesnt exist: HTTP Success Ok and falsey result', async () => {
@@ -236,7 +230,7 @@ describe('GetExistsUsername', () => {
     expect(findUserDb).toHaveBeenCalled();
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.result).toBe(false);
+      expect(response.body.result).toBe(false);
     }
   });
 });
@@ -257,19 +251,16 @@ describe('GetSearchUsername', () => {
     expect(response).toMatchInlineSnapshot(`
       {
         "body": {
-          "data": {
-            "users": [
-              {
-                "id": "${testUsers[0].id}",
-                "username": "${testUsers[0].username}",
-              },
-              {
-                "id": "${testUsers[1].id}",
-                "username": "${testUsers[1].username}",
-              },
-            ],
-          },
-          "status": "success",
+          "users": [
+            {
+              "id": "${testUsers[0].id}",
+              "username": "${testUsers[0].username}",
+            },
+            {
+              "id": "${testUsers[1].id}",
+              "username": "${testUsers[1].username}",
+            },
+          ],
         },
         "status": ${SuccessCode.Ok},
       }
@@ -285,7 +276,7 @@ describe('GetSearchUsername', () => {
 
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body).toMatchObject({ data: { users: [] } });
+      expect(response.body).toMatchObject({ users: [] });
     }
   });
 });
@@ -306,19 +297,16 @@ describe('GetSearchAny', () => {
     expect(response).toMatchInlineSnapshot(`
       {
         "body": {
-          "data": {
-            "users": [
-              {
-                "id": "${testUsers[0].id}",
-                "username": "${testUsers[0].username}",
-              },
-              {
-                "id": "${testUsers[1].id}",
-                "username": "${testUsers[1].username}",
-              },
-            ],
-          },
-          "status": "success",
+          "users": [
+            {
+              "id": "${testUsers[0].id}",
+              "username": "${testUsers[0].username}",
+            },
+            {
+              "id": "${testUsers[1].id}",
+              "username": "${testUsers[1].username}",
+            },
+          ],
         },
         "status": ${SuccessCode.Ok},
       }
@@ -337,7 +325,7 @@ describe('GetSearchAny', () => {
 
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body).toMatchObject({ data: { users: [] } });
+      expect(response.body).toMatchObject({ users: [] });
     }
   });
 });
@@ -420,7 +408,7 @@ describe('GetCheckFollow', () => {
 
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
-        expect(response.body).toMatchObject({ data: { result: true } });
+        expect(response.body).toMatchObject({ result: true });
       }
     });
 
@@ -434,7 +422,7 @@ describe('GetCheckFollow', () => {
       });
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
-        expect(response.body).toMatchObject({ data: { result: false } });
+        expect(response.body).toMatchObject({ result: false });
       }
     });
   });
@@ -535,7 +523,7 @@ describe('Post', () => {
     });
     expect(response.status).toBe(SuccessCode.Created);
     if (response.status === SuccessCode.Created) {
-      expect(response.body).toMatchObject({ data: { id: testID } });
+      expect(response.body).toMatchObject({ id: testID });
     }
   });
 });
@@ -584,7 +572,7 @@ describe('Put', () => {
     });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body).toMatchObject({ data: { id: testID } });
+      expect(response.body).toMatchObject({ id: testID });
     }
   });
 });
@@ -636,7 +624,7 @@ describe('PutEmail', () => {
     });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body).toMatchObject({ data: { id: testID } });
+      expect(response.body).toMatchObject({ id: testID });
     }
   });
 });
@@ -701,7 +689,7 @@ describe('PutPassword', () => {
 
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
-        expect(response.body).toMatchObject({ data: { id } });
+        expect(response.body).toMatchObject({ id });
       }
     });
   });
@@ -828,10 +816,8 @@ describe('PutFollower', () => {
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
         expect(response.body).toMatchObject({
-          data: {
-            target: { id: targetId },
-            follower: { id: followerId },
-          },
+          target: { id: targetId },
+          follower: { id: followerId },
         });
       }
     });
@@ -871,7 +857,7 @@ describe('PutActivate', () => {
       expect(dbActivationSpy.mock.calls[0][0]).toMatchObject({ id });
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
-        expect(response.body.data.id).toBe(id);
+        expect(response.body.id).toBe(id);
       }
     });
   });
@@ -926,7 +912,7 @@ describe('PutUsername', () => {
       expect(dbUsernameSpy.mock.calls[0][0]).toMatchObject({ id, username });
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
-        expect(response.body).toMatchObject({ data: { id } });
+        expect(response.body).toMatchObject({ id });
       }
     });
   });
@@ -945,7 +931,7 @@ describe('Delete', () => {
     expect(dbDropSpy.mock.calls[0][0]).toMatchObject({ ids: [id] });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body).toMatchObject({ data: { id } });
+      expect(response.body).toMatchObject({ id });
     }
   });
 });
@@ -1069,10 +1055,8 @@ describe('DeleteFollow', () => {
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
         expect(response.body).toMatchObject({
-          data: {
-            target: { id: targetId },
-            follower: { id: userID },
-          },
+          target: { id: targetId },
+          follower: { id: userID },
         });
       }
     });

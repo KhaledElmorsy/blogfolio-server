@@ -10,10 +10,9 @@ export default createController('Comment', CommentType.endpoints, (error) => ({
         errors: [createError(error.Comment.NotFound, { id })],
       });
     }
-    return createResponse(codes.success.Ok, { data: { comment } });
+    return createResponse(codes.success.Ok, { comment });
   },
 
-  // @ts-expect-error TODO Look into types with similar errors mixing the data shape
   async GetByRelation(
     { query: { limit, nextID, popular, postID, userID } },
     { createResponse, createError, codes },
@@ -40,7 +39,7 @@ export default createController('Comment', CommentType.endpoints, (error) => ({
       { limit, nextID, popular },
     );
 
-    return createResponse(codes.success.Ok, { data: { comments } });
+    return createResponse(codes.success.Ok, { comments });
   },
 
   async GetBySlug(
@@ -54,7 +53,7 @@ export default createController('Comment', CommentType.endpoints, (error) => ({
       nextID,
       popular,
     });
-    return createResponse(codes.success.Ok, { data: { comments } });
+    return createResponse(codes.success.Ok, { comments });
   },
 
   async Post(
@@ -71,7 +70,7 @@ export default createController('Comment', CommentType.endpoints, (error) => ({
     }
     const id = await Comment.generateID();
     await Comment.create({ body, id, postID, userID, parentID });
-    return createResponse(codes.success.Created, { data: { id } });
+    return createResponse(codes.success.Created, { id });
   },
 
   async Put(

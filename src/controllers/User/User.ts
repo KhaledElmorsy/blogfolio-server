@@ -19,7 +19,7 @@ export default createController('User', endPoints, (errors) => ({
   ) {
     const [user] = await getUserList({ id }, { fields });
     if (user) {
-      return createResponse(codes.success.Ok, { data: { user } });
+      return createResponse(codes.success.Ok, { user });
     }
     return createResponse(codes.error.NotFound, {
       errors: [createError(errors.User.UserNotFound, { id })],
@@ -38,7 +38,7 @@ export default createController('User', endPoints, (errors) => ({
       { limit: DEFAULT_USER_LIST_SIZE_GENERAL, ...query },
     );
 
-    return createResponse(codes.success.Ok, { data: { users: followers } });
+    return createResponse(codes.success.Ok, { users: followers });
   },
 
   async GetFollows({ params: { id }, query }, { codes, createResponse }) {
@@ -53,19 +53,17 @@ export default createController('User', endPoints, (errors) => ({
       { limit: DEFAULT_USER_LIST_SIZE_GENERAL, ...query },
     );
 
-    return createResponse(codes.success.Ok, { data: { users: follows } });
+    return createResponse(codes.success.Ok, { users: follows });
   },
 
   async GetExistsEmail({ params: { email } }, { codes, createResponse }) {
     const emailExists = (await findMissing({ email: [email] })).length === 0;
-    return createResponse(codes.success.Ok, { data: { result: emailExists } });
+    return createResponse(codes.success.Ok, { result: emailExists });
   },
 
   async GetExistsUsername({ params: { username } }, { codes, createResponse }) {
     const usernameExists = (await findMissing({ username: [username] })).length === 0;
-    return createResponse(codes.success.Ok, {
-      data: { result: usernameExists },
-    });
+    return createResponse(codes.success.Ok, { result: usernameExists });
   },
 
   async GetSearchUsername(
@@ -76,7 +74,7 @@ export default createController('User', endPoints, (errors) => ({
       { searchUsername: username },
       { limit: DEFAULT_USER_LIST_SIZE_GENERAL, ...query },
     );
-    return createResponse(codes.success.Ok, { data: { users } });
+    return createResponse(codes.success.Ok, { users });
   },
 
   async GetSearchAny({ params: { text }, query }, { codes, createResponse }) {
@@ -84,7 +82,7 @@ export default createController('User', endPoints, (errors) => ({
       { searchAny: text },
       { limit: DEFAULT_USER_LIST_SIZE_GENERAL, ...query },
     );
-    return createResponse(codes.success.Ok, { data: { users } });
+    return createResponse(codes.success.Ok, { users });
   },
 
   async GetCheckFollow(
@@ -101,7 +99,7 @@ export default createController('User', endPoints, (errors) => ({
       { followerId, id },
       pool,
     );
-    return createResponse(codes.success.Ok, { data: { result: doesFollow } });
+    return createResponse(codes.success.Ok, { result: doesFollow });
   },
 
   async CheckUsername(
@@ -153,13 +151,13 @@ export default createController('User', endPoints, (errors) => ({
       },
       pool,
     );
-    return createResponse(codes.success.Created, { data: { id } });
+    return createResponse(codes.success.Created, { id });
   },
 
   async Put({ body }, { codes, createResponse }, { res }) {
     const { userID: id } = res.locals;
     await userDB.update.run({ id, ...body }, pool);
-    return createResponse(codes.success.Ok, { data: { id } });
+    return createResponse(codes.success.Ok, { id });
   },
 
   async PutEmail(
@@ -175,7 +173,7 @@ export default createController('User', endPoints, (errors) => ({
       });
     }
     await userDB.update.run({ id, email }, pool);
-    return createResponse(codes.success.Ok, { data: { id } });
+    return createResponse(codes.success.Ok, { id });
   },
 
   async PutPassword(
@@ -195,7 +193,7 @@ export default createController('User', endPoints, (errors) => ({
       });
     }
     await userDB.update.run({ id, password }, pool);
-    return createResponse(codes.success.Ok, { data: { id } });
+    return createResponse(codes.success.Ok, { id });
   },
 
   async PutFollower(
@@ -228,7 +226,8 @@ export default createController('User', endPoints, (errors) => ({
     }
     await userDB.addFollow.run({ followerId: id, id: targetId }, pool);
     return createResponse(codes.success.Ok, {
-      data: { follower: { id }, target: { id: targetId } },
+      follower: { id },
+      target: { id: targetId },
     });
   },
 
@@ -248,7 +247,7 @@ export default createController('User', endPoints, (errors) => ({
       });
     }
     await userDB.activate.run({ id }, pool);
-    return createResponse(codes.success.Ok, { data: { id } });
+    return createResponse(codes.success.Ok, { id });
   },
 
   async PutUsername(
@@ -265,13 +264,13 @@ export default createController('User', endPoints, (errors) => ({
       });
     }
     await userDB.update.run({ id, username }, pool);
-    return createResponse(codes.success.Ok, { data: { id } });
+    return createResponse(codes.success.Ok, { id });
   },
 
   async Delete(_req, { codes, createResponse }, { res }) {
     const { userID: id } = res.locals;
     await userDB.drop.run({ ids: [id], pks: [null] }, pool);
-    return createResponse(codes.success.Ok, { data: { id } });
+    return createResponse(codes.success.Ok, { id });
   },
 
   async DeleteFollow(
@@ -304,7 +303,8 @@ export default createController('User', endPoints, (errors) => ({
 
     await userDB.removeFollow.run({ followerId: id, id: targetId }, pool);
     return createResponse(codes.success.Ok, {
-      data: { follower: { id }, target: { id: targetId } },
+      follower: { id },
+      target: { id: targetId },
     });
   },
 }));

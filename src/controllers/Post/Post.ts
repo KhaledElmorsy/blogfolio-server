@@ -7,7 +7,7 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
     const post = await Post.get(id);
     // Ensure that the post is public
     if (post && post.visible) {
-      return createResponse(codes.success.Ok, { data: { post } });
+      return createResponse(codes.success.Ok, { post });
     }
 
     return createResponse(codes.error.NotFound, {
@@ -28,7 +28,7 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
       visible: !drafts,
       sortByDate: sort === 'date',
     });
-    return createResponse(codes.success.Ok, { data: { posts } });
+    return createResponse(codes.success.Ok, { posts });
   },
 
   async GetByUsername(
@@ -41,7 +41,7 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
       nextID,
       sortByDate: sort === 'date',
     });
-    return createResponse(codes.success.Ok, { data: { posts } });
+    return createResponse(codes.success.Ok, { posts });
   },
 
   async GetSearch(
@@ -53,10 +53,9 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
       nextID,
       sortByDate: sort === 'date',
     });
-    return createResponse(codes.success.Ok, { data: { posts } });
+    return createResponse(codes.success.Ok, { posts });
   },
 
-  // @ts-expect-error TS expects the missing username response, but thats handled in middleware
   async GetBySlug(
     { params: { slug, username } },
     { createResponse, createError, codes },
@@ -67,7 +66,7 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
         errors: [createError(error.Post.NotFound, { slug })],
       });
     }
-    return createResponse(codes.success.Ok, { data: { post } });
+    return createResponse(codes.success.Ok, { post });
   },
 
   async Post(
@@ -84,7 +83,7 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
     }
     const postID = await Post.generateID();
     await Post.create({ body, title, slug, summary, userID, postID });
-    return createResponse(codes.success.Created, { data: { id: postID } });
+    return createResponse(codes.success.Created, { id: postID });
   },
 
   async Put(

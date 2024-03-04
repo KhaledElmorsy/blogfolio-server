@@ -58,7 +58,7 @@ describe('Get', () => {
     const response = await Post.Get({ params: { id } });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.post).toMatchObject(testPost);
+      expect(response.body.post).toMatchObject(testPost);
     }
   });
 });
@@ -77,7 +77,7 @@ describe('GetByUserID', () => {
     expect(serviceSpy.mock.calls[0][0]).toBe(userID);
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.posts).toEqual([testPost]);
+      expect(response.body.posts).toEqual([testPost]);
     }
   });
 
@@ -119,7 +119,7 @@ describe('GetByUsername', () => {
     expect(serviceSpy.mock.calls[0][0]).toBe(username);
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.posts).toEqual([testPost]);
+      expect(response.body.posts).toEqual([testPost]);
     }
   });
 
@@ -155,7 +155,7 @@ describe('GetSearch', () => {
     expect(serviceSpy.mock.calls[0][0]).toBe(search);
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.posts).toEqual([testPost]);
+      expect(response.body.posts).toEqual([testPost]);
     }
   });
 
@@ -197,7 +197,7 @@ describe('GetBySlug', () => {
     });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.post).toMatchObject(testPost);
+      expect(response.body.post).toMatchObject(testPost);
     }
   });
 });
@@ -248,7 +248,7 @@ describe('Post', () => {
     });
     expect(response.status).toBe(SuccessCode.Created);
     if (response.status === SuccessCode.Created) {
-      expect(response.body.data.id).toBe(postID);
+      expect(response.body.id).toBe(postID);
     }
   });
 });

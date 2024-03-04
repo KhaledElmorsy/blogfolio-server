@@ -18,7 +18,7 @@ describe('Get', () => {
     const response = await Emote.Get({});
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data).toBe(emotes);
+      expect(response.body).toBe(emotes);
     }
   });
 });
@@ -47,7 +47,7 @@ describe('PostGetPostEmotes', () => {
     const response = await Emote.PostGetPostEmotes({ body: { ids: ['test'] } });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data).toEqual(
+      expect(response.body).toEqual(
         emotes.map(({ postID, userID, id }) => ({
           postID,
           userID,
@@ -85,7 +85,7 @@ describe('PostGetPostEmotes', () => {
       });
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
-        expect(response.body.data).toEqual(
+        expect(response.body).toEqual(
           emotes.map((emote) => ({
             emoteID: emote.id,
             userID: emote.userID,
@@ -124,7 +124,7 @@ describe('PostGetCommentEmotes', () => {
     });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data).toEqual(
+      expect(response.body).toEqual(
         emotes.map(({ commentID, userID, id }) => ({
           commentID,
           userID,
@@ -162,7 +162,7 @@ describe('PostGetCommentEmotes', () => {
       });
       expect(response.status).toBe(SuccessCode.Ok);
       if (response.status === SuccessCode.Ok) {
-        expect(response.body.data).toEqual(
+        expect(response.body).toEqual(
           emotes.map((emote) => ({
             emoteID: emote.id,
             userID: emote.userID,

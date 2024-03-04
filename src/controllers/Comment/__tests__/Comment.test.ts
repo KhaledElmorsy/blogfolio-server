@@ -39,7 +39,7 @@ describe('Get', () => {
     const response = await Comment.Get({ params: { id: 'testID' } });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.comment).toBe(comment);
+      expect(response.body.comment).toBe(comment);
     }
   });
 });
@@ -90,7 +90,7 @@ describe('GetByRelation', () => {
     });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.comments).toBe(comments);
+      expect(response.body.comments).toBe(comments);
     }
     expect(findSpy.mock.calls[0][1]).toMatchObject(options);
   });
@@ -115,7 +115,7 @@ describe('GetBySlug', () => {
     });
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.data.comments).toBe(comments);
+      expect(response.body.comments).toBe(comments);
     }
     expect(findSpy).toHaveBeenCalledWith(username, slug, options);
   });
@@ -155,7 +155,7 @@ describe('Post', () => {
     );
     expect(response.status).toBe(SuccessCode.Created);
     if (response.status === SuccessCode.Created) {
-      expect(response.body.data.id).toBe(id);
+      expect(response.body.id).toBe(id);
     }
     expect(serviceCreateSpy).toHaveBeenCalledWith({
       body,

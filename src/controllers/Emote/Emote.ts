@@ -10,7 +10,7 @@ import { createController } from '../util';
 export default createController('Emote', EmoteType.endpoints, (error) => ({
   async Get(_, { createResponse, codes }) {
     const emotes = await Emote.getEmotes();
-    return createResponse(codes.success.Ok, { data: emotes });
+    return createResponse(codes.success.Ok, emotes);
   },
 
   async PostGetPostEmotes(
@@ -38,7 +38,7 @@ export default createController('Emote', EmoteType.endpoints, (error) => ({
       postID: emote.postID,
       emoteID: emote.id,
     }));
-    return createResponse(codes.success.Ok, { data: mappedResponse });
+    return createResponse(codes.success.Ok, mappedResponse);
   },
 
   async PostGetCommentEmotes(
@@ -68,7 +68,7 @@ export default createController('Emote', EmoteType.endpoints, (error) => ({
       commentID: emote.commentID,
       emoteID: emote.id,
     }));
-    return createResponse(codes.success.Ok, { data: mappedResponse });
+    return createResponse(codes.success.Ok, mappedResponse);
   },
 
   async PostNewPostEmote(
