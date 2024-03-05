@@ -30,10 +30,10 @@ app.use(cookieParser());
 app.disable('x-powered-by');
 
 const v1 = Router();
-v1.use('/p', posts);
-v1.use('/u', users);
-v1.use('/e', emotes);
-v1.use('/c', comments);
+v1.use('/posts', posts);
+v1.use('/users', users);
+v1.use('/emotes', emotes);
+v1.use('/comments', comments);
 v1.use('/user', username);
 v1.use('/', authentication);
 
