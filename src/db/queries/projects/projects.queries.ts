@@ -15,7 +15,7 @@ export interface IGetResult {
   name: string;
   priority: number;
   projectID: string;
-  skills: stringArray | null;
+  skills: stringArray;
   userID: string;
 }
 
@@ -52,7 +52,7 @@ export interface IInsertParams {
   name: string;
   priority: number;
   projectID: string;
-  skills?: stringArray | null | void;
+  skills: stringArray;
   userID: string;
 }
 
@@ -65,7 +65,7 @@ export interface IInsertQuery {
   result: IInsertResult;
 }
 
-const insertIR: any = {"usedParamSet":{"projectID":true,"userID":true,"name":true,"description":true,"skills":true,"priority":true},"params":[{"name":"projectID","required":true,"transform":{"type":"scalar"},"locs":[{"a":106,"b":116}]},{"name":"userID","required":true,"transform":{"type":"scalar"},"locs":[{"a":165,"b":172}]},{"name":"name","required":true,"transform":{"type":"scalar"},"locs":[{"a":178,"b":183}]},{"name":"description","required":true,"transform":{"type":"scalar"},"locs":[{"a":188,"b":200}]},{"name":"skills","required":false,"transform":{"type":"scalar"},"locs":[{"a":205,"b":211}]},{"name":"priority","required":true,"transform":{"type":"scalar"},"locs":[{"a":216,"b":225}]}],"statement":"INSERT INTO projects (\n  project_uid,\n  user_id,\n  name,\n  description,\n  skills,\n  priority\n) VALUES (\n  :projectID!,\n  (SELECT user_id FROM users WHERE user_uid = :userID!),\n  :name!,\n  :description!,\n  :skills,\n  :priority!\n)"};
+const insertIR: any = {"usedParamSet":{"projectID":true,"userID":true,"name":true,"description":true,"skills":true,"priority":true},"params":[{"name":"projectID","required":true,"transform":{"type":"scalar"},"locs":[{"a":106,"b":116}]},{"name":"userID","required":true,"transform":{"type":"scalar"},"locs":[{"a":165,"b":172}]},{"name":"name","required":true,"transform":{"type":"scalar"},"locs":[{"a":178,"b":183}]},{"name":"description","required":true,"transform":{"type":"scalar"},"locs":[{"a":188,"b":200}]},{"name":"skills","required":true,"transform":{"type":"scalar"},"locs":[{"a":205,"b":212}]},{"name":"priority","required":true,"transform":{"type":"scalar"},"locs":[{"a":217,"b":226}]}],"statement":"INSERT INTO projects (\n  project_uid,\n  user_id,\n  name,\n  description,\n  skills,\n  priority\n) VALUES (\n  :projectID!,\n  (SELECT user_id FROM users WHERE user_uid = :userID!),\n  :name!,\n  :description!,\n  :skills!,\n  :priority!\n)"};
 
 /**
  * Query generated from SQL:
@@ -82,7 +82,7 @@ const insertIR: any = {"usedParamSet":{"projectID":true,"userID":true,"name":tru
  *   (SELECT user_id FROM users WHERE user_uid = :userID!),
  *   :name!,
  *   :description!,
- *   :skills,
+ *   :skills!,
  *   :priority!
  * )
  * ```

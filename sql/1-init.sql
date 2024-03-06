@@ -164,7 +164,7 @@ CREATE TABLE projects (
 	user_id BIGINT REFERENCES users ON DELETE CASCADE,
 	name TEXT NOT NULL,
 	description TEXT NOT NULL,
-	skills TEXT[],
+	skills TEXT[] NOT NULL,
 	priority INT NOT NULL,
 	UNIQUE(user_id, priority) DEFERRABLE
 );

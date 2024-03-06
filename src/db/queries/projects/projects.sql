@@ -24,7 +24,7 @@ INSERT INTO projects (
   (SELECT user_id FROM users WHERE user_uid = :userID!),
   :name!,
   :description!,
-  :skills,
+  :skills!,
   :priority!
 );
 
