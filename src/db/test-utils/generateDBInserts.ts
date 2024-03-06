@@ -7,7 +7,9 @@ const escape = (value: unknown): any => {
     case 'boolean':
       return value;
     default:
-      return value === null ? 'null' : `'${value}`;
+      if (value === null) return 'null';
+      if (Array.isArray(value)) return `ARRAY [${value.map(escape).join(',')}]`;
+      return `'${value}`;
   }
 };
 

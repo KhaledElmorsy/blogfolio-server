@@ -14,7 +14,7 @@ import * as postsDB from '../posts.queries';
 
 beforeAll(async () => {
   await pool.query(
-    generateDBInserts(testData, ['users', 'nodes', 'posts'], {
+    generateDBInserts(testData, ['users', 'posts'], {
       posts: { post_id: true },
     }),
   );

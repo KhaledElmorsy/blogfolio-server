@@ -16,7 +16,7 @@ beforeAll(async () => {
   await pool.query(
     generateDBInserts(
       testData,
-      ['users', 'nodes', 'posts', 'comments', 'emotes', 'comment_emotes'],
+      ['users', 'posts', 'comments', 'emotes', 'comment_emotes'],
       {
         comments: { comment_id: true },
         emotes: { emote_id: true },

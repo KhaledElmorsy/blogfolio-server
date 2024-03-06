@@ -18,7 +18,6 @@ beforeAll(async () => {
       testData,
       [
         'users',
-        'nodes',
         'posts',
         'comments',
         'emotes',

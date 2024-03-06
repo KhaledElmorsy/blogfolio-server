@@ -10,7 +10,6 @@
       "type": "number",
       "id": {}
     },
-    "node_id": "@nodes.content.node_id",
     "post_uid": {
       "type":"string",
       "uuid": {}

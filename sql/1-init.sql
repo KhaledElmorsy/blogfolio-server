@@ -156,6 +156,22 @@ CREATE TABLE post_emotes (
 CREATE INDEX post_emote_id ON post_emotes USING HASH (post_id);
 
 -- --------------------------------------------------------------- --
+--	                         PROJECTS                              --
+-- --------------------------------------------------------------- --
+
+CREATE TABLE projects (
+	project_uid TEXT PRIMARY KEY,
+	user_id BIGINT REFERENCES users ON DELETE CASCADE,
+	name TEXT NOT NULL,
+	description TEXT NOT NULL,
+	skills TEXT[],
+	priority INT NOT NULL,
+	UNIQUE(user_id, priority) DEFERRABLE
+);
+CREATE INDEX project_user_id ON projects USING HASH (user_id);
+
+
+-- --------------------------------------------------------------- --
 --	                    CATEGORIES & TAGS                          --
 -- --------------------------------------------------------------- --
 	

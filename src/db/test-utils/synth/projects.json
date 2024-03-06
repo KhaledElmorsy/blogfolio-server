@@ -1,0 +1,44 @@
+{
+  "type": "array",
+  "length": {
+    "type": "number",
+    "constant": 40
+  },
+  "content": {
+    "type": "object",
+    "project_uid": {
+      "type": "string",
+      "uuid": {}
+    },
+    "user_id":"@users.content.user_id",
+    "name": {
+      "type": "string",
+      "faker": {
+        "generator": "bs"
+      }
+    }, 
+    "description": {
+      "type": "string",
+      "faker": {
+        "generator": "bs"
+      }
+    },
+    "priority": {
+      "type": "number",
+      "id": {}
+    },
+    "skills": {
+      "type": "array",
+      "length": {
+        "type": "number",
+        "constant": 3
+      },
+      "content": {
+        "type": "string",
+        "faker": {
+          "generator": "bs"
+        }
+      }
+    }
+  }
+}
