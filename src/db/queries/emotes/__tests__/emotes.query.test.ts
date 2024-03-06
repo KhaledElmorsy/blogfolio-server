@@ -129,6 +129,34 @@ describe('getPost', () => {
   });
 });
 
+describe('getPostCumulative', () => {
+  it('Returns the number of emotes on each post', async () => {
+    const posts = testData.posts.slice(0, 5);
+    const postIDs = posts.map(({ post_uid }) => post_uid);
+    const postCumulativeEmotes = posts.flatMap((post) => {
+      const { emotes } = testData;
+      const emoteCounts = emotes.flatMap((emote) => {
+        const count = testData.post_emotes.filter(
+          (post_emote) =>
+            post_emote.emote_id === emote.emote_id
+            && post_emote.post_id === post.post_id,
+        ).length;
+        return count ? [{ emoteID: emote.emote_id, count }] : [];
+      });
+      return emoteCounts.map((emoteCount) => ({
+        ...emoteCount,
+        postID: post.post_uid,
+      }));
+    });
+    const queryResult = await emoteDB.getPostCumulative.run(
+      { postIDs },
+      client,
+    );
+    expect(queryResult.length).toBe(postCumulativeEmotes.length);
+    expect(queryResult).toEqual(expect.arrayContaining(postCumulativeEmotes));
+  });
+});
+
 describe('getComment', () => {
   it('Return emotes for multiple comments', async () => {
     const comments = testData.comments.slice(0, 5);
@@ -163,6 +191,36 @@ describe('getComment', () => {
       expect(emote.userID).toBe(userID);
       expect(commentIDs).toContain(emote.commentID);
     });
+  });
+});
+
+describe('getCommentCumulative', () => {
+  it('Returns the number of emotes on the comments', async () => {
+    const comments = testData.comments.slice(0, 5);
+    const commentIDs = comments.map(({ comment_uid }) => comment_uid);
+    const commentCumulativeEmotes = comments.flatMap((comment) => {
+      const { emotes } = testData;
+      const emoteCounts = emotes.flatMap((emote) => {
+        const count = testData.comment_emotes.filter(
+          (comment_emote) =>
+            comment_emote.emote_id === emote.emote_id
+            && comment_emote.comment_id === comment.post_id,
+        ).length;
+        return count ? [{ emoteID: emote.emote_id, count }] : [];
+      });
+      return emoteCounts.map((emoteCount) => ({
+        ...emoteCount,
+        commentID: comment.comment_uid,
+      }));
+    });
+    const queryResult = await emoteDB.getCommentCumulative.run(
+      { commentIDs },
+      client,
+    );
+    expect(queryResult.length).toBe(commentCumulativeEmotes.length);
+    expect(queryResult).toEqual(
+      expect.arrayContaining(commentCumulativeEmotes),
+    );
   });
 });
 

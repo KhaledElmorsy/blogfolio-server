@@ -10,6 +10,12 @@ FROM post_emotes e
 WHERE post_id IN (SELECT post_id FROM posts WHERE post_uid = ANY (:postIDs))
 AND (e.user_id = (SELECT user_id FROM users WHERE user_uid = :userID) OR :userID IS NULL);
 
+/* @name getPostCumulative */
+SELECT e.emote_id as "emoteID", p.post_uid as "postID", count(e.user_id) as "count!"
+FROM post_emotes e
+LEFT JOIN posts p ON e.post_id = p.post_id
+WHERE p.post_uid = ANY (:postIDs)
+GROUP BY e.emote_id, p.post_uid;
 
 /* @name getComments */
 SELECT 
@@ -19,6 +25,13 @@ SELECT
 FROM comment_emotes e
 WHERE comment_id IN (SELECT comment_id FROM comments WHERE comment_uid = ANY (:commentIDs))
 AND (e.user_id = (SELECT user_id FROM users WHERE user_uid = :userID) OR :userID IS NULL);
+
+/* @name getCommentCumulative */
+SELECT e.emote_id as "emoteID", c.comment_uid as "commentID", count(e.user_id) as "count!"
+FROM comment_emotes e
+JOIN comments c ON e.comment_id = c.comment_id
+WHERE c.comment_uid = ANY (:commentIDs)
+GROUP BY e.emote_id, c.comment_uid;
 
 /* @name insertForPost */
 INSERT INTO post_emotes (post_id, user_id, emote_id) VALUES (

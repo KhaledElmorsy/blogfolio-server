@@ -65,6 +65,39 @@ const getPostsIR: any = {"usedParamSet":{"postIDs":true,"userID":true},"params":
 export const getPosts = new PreparedQuery<IGetPostsParams,IGetPostsResult>(getPostsIR);
 
 
+/** 'GetPostCumulative' parameters type */
+export interface IGetPostCumulativeParams {
+  postIDs?: stringArray | null | void;
+}
+
+/** 'GetPostCumulative' return type */
+export interface IGetPostCumulativeResult {
+  count: number;
+  emoteID: number;
+  postID: string;
+}
+
+/** 'GetPostCumulative' query type */
+export interface IGetPostCumulativeQuery {
+  params: IGetPostCumulativeParams;
+  result: IGetPostCumulativeResult;
+}
+
+const getPostCumulativeIR: any = {"usedParamSet":{"postIDs":true},"params":[{"name":"postIDs","required":false,"transform":{"type":"scalar"},"locs":[{"a":171,"b":178}]}],"statement":"SELECT e.emote_id as \"emoteID\", p.post_uid as \"postID\", count(e.user_id) as \"count!\"\nFROM post_emotes e\nLEFT JOIN posts p ON e.post_id = p.post_id\nWHERE p.post_uid = ANY (:postIDs)\nGROUP BY e.emote_id, p.post_uid"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT e.emote_id as "emoteID", p.post_uid as "postID", count(e.user_id) as "count!"
+ * FROM post_emotes e
+ * LEFT JOIN posts p ON e.post_id = p.post_id
+ * WHERE p.post_uid = ANY (:postIDs)
+ * GROUP BY e.emote_id, p.post_uid
+ * ```
+ */
+export const getPostCumulative = new PreparedQuery<IGetPostCumulativeParams,IGetPostCumulativeResult>(getPostCumulativeIR);
+
+
 /** 'GetComments' parameters type */
 export interface IGetCommentsParams {
   commentIDs?: stringArray | null | void;
@@ -99,6 +132,39 @@ const getCommentsIR: any = {"usedParamSet":{"commentIDs":true,"userID":true},"pa
  * ```
  */
 export const getComments = new PreparedQuery<IGetCommentsParams,IGetCommentsResult>(getCommentsIR);
+
+
+/** 'GetCommentCumulative' parameters type */
+export interface IGetCommentCumulativeParams {
+  commentIDs?: stringArray | null | void;
+}
+
+/** 'GetCommentCumulative' return type */
+export interface IGetCommentCumulativeResult {
+  commentID: string;
+  count: number;
+  emoteID: number;
+}
+
+/** 'GetCommentCumulative' query type */
+export interface IGetCommentCumulativeQuery {
+  params: IGetCommentCumulativeParams;
+  result: IGetCommentCumulativeResult;
+}
+
+const getCommentCumulativeIR: any = {"usedParamSet":{"commentIDs":true},"params":[{"name":"commentIDs","required":false,"transform":{"type":"scalar"},"locs":[{"a":187,"b":197}]}],"statement":"SELECT e.emote_id as \"emoteID\", c.comment_uid as \"commentID\", count(e.user_id) as \"count!\"\nFROM comment_emotes e\nJOIN comments c ON e.comment_id = c.comment_id\nWHERE c.comment_uid = ANY (:commentIDs)\nGROUP BY e.emote_id, c.comment_uid"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT e.emote_id as "emoteID", c.comment_uid as "commentID", count(e.user_id) as "count!"
+ * FROM comment_emotes e
+ * JOIN comments c ON e.comment_id = c.comment_id
+ * WHERE c.comment_uid = ANY (:commentIDs)
+ * GROUP BY e.emote_id, c.comment_uid
+ * ```
+ */
+export const getCommentCumulative = new PreparedQuery<IGetCommentCumulativeParams,IGetCommentCumulativeResult>(getCommentCumulativeIR);
 
 
 /** 'InsertForPost' parameters type */
