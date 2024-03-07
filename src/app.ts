@@ -12,6 +12,7 @@ import {
   username,
   comments,
   emotes,
+  projects,
 } from './routes';
 
 const debug = Debug('app');
@@ -34,6 +35,7 @@ v1.use('/posts', posts);
 v1.use('/users', users);
 v1.use('/emotes', emotes);
 v1.use('/comments', comments);
+v1.use('/projects', projects);
 v1.use('/user', username);
 v1.use('/', authentication);
 
