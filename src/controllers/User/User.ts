@@ -102,6 +102,15 @@ export default createController('User', endPoints, (errors) => ({
     return createResponse(codes.success.Ok, { result: doesFollow });
   },
 
+  async GetMe(_, { createResponse, codes }, { res }) {
+    const { userID } = res.locals as { userID: string };
+    const [user] = await getUserList(
+      { id: userID },
+      { fields: ['photoFull', 'photoSmall'] },
+    );
+    return createResponse(codes.success.Ok, { user });
+  },
+
   async CheckUsername(
     { params: { username } },
     { createResponse, createError, codes },

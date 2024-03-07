@@ -428,6 +428,26 @@ describe('GetCheckFollow', () => {
   });
 });
 
+describe('GetMe', () => {
+  test('HTTP Success Ok with the user data', async () => {
+    const user = {};
+    const userID = 'testID';
+    const querySpy = vi
+      .spyOn(userService, 'getUserList')
+      .mockResolvedValue([user as any]);
+
+    const response = await User.GetMe({}, { res: { locals: { userID } } });
+    expect(response.status).toBe(SuccessCode.Ok);
+    if (response.status === SuccessCode.Ok) {
+      expect(response.body.user).toBe(user);
+    }
+    expect(querySpy).toHaveBeenCalledWith(
+      { id: userID },
+      { fields: ['photoFull', 'photoSmall'] },
+    );
+  });
+});
+
 describe('Post', () => {
   const newUser: Resources['NewUserRequest'] = {
     email: 'testEmail@email.com',
