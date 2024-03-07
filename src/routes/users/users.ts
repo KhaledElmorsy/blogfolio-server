@@ -6,11 +6,7 @@ const router = Router();
 
 /* ================================= GET ==================================== */
 
-router.get('/:id/', User.Get);
-
-router.get('/:id/follows', User.GetFollows);
-
-router.get('/:id/followers', User.GetFollowers);
+router.get('/me', authorize, User.GetMe);
 
 router.get('/s/username/:username', User.GetSearchUsername);
 
@@ -19,6 +15,12 @@ router.get('/s/any/:text', User.GetSearchAny);
 router.get('/t/exists/email/:email', User.GetExistsEmail);
 
 router.get('/t/exists/username/:username', User.GetExistsUsername);
+
+router.get('/:id/', User.Get);
+
+router.get('/:id/follows', User.GetFollows);
+
+router.get('/:id/followers', User.GetFollowers);
 
 router.get('/:followerId/follows/:id', User.GetCheckFollow);
 
