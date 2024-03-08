@@ -20,6 +20,8 @@ const testPost: typeof postSchema._output = {
   userID: 'userID',
 };
 
+const { body: BODY, visible: VISIBLE, ...lightTestPost } = testPost;
+
 describe('Get', () => {
   test('Post not found: HTTP Error Not Found. Returns ID.', async () => {
     vi.spyOn(postService, 'get').mockResolvedValue(undefined);
@@ -77,7 +79,7 @@ describe('GetByUserID', () => {
     expect(serviceSpy.mock.calls[0][0]).toBe(userID);
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.posts).toEqual([testPost]);
+      expect(response.body.posts).toEqual([lightTestPost]);
     }
   });
 
@@ -119,7 +121,7 @@ describe('GetByUsername', () => {
     expect(serviceSpy.mock.calls[0][0]).toBe(username);
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.posts).toEqual([testPost]);
+      expect(response.body.posts).toEqual([lightTestPost]);
     }
   });
 
@@ -155,7 +157,7 @@ describe('GetSearch', () => {
     expect(serviceSpy.mock.calls[0][0]).toBe(search);
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
-      expect(response.body.posts).toEqual([testPost]);
+      expect(response.body.posts).toEqual([lightTestPost]);
     }
   });
 

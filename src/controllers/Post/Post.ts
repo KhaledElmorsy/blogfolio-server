@@ -28,7 +28,11 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
       visible: !drafts,
       sortByDate: sort === 'date',
     });
-    return createResponse(codes.success.Ok, { posts });
+    const lightPosts = posts.map((post) => {
+      const { body, visible, ...lightPost } = post;
+      return lightPost;
+    });
+    return createResponse(codes.success.Ok, { posts: lightPosts });
   },
 
   async GetByUsername(
@@ -41,7 +45,11 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
       nextID,
       sortByDate: sort === 'date',
     });
-    return createResponse(codes.success.Ok, { posts });
+    const lightPosts = posts.map((post) => {
+      const { body, visible, ...lightPost } = post;
+      return lightPost;
+    });
+    return createResponse(codes.success.Ok, { posts: lightPosts });
   },
 
   async GetSearch(
@@ -53,7 +61,11 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
       nextID,
       sortByDate: sort === 'date',
     });
-    return createResponse(codes.success.Ok, { posts });
+    const lightPosts = posts.map((post) => {
+      const { body, visible, ...lightPost } = post;
+      return lightPost;
+    });
+    return createResponse(codes.success.Ok, { posts: lightPosts });
   },
 
   async GetBySlug(
