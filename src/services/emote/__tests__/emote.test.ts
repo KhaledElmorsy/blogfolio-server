@@ -171,3 +171,67 @@ describe('checkEmoteExists', () => {
     expect(emoteExists).toBe(false);
   });
 });
+
+describe('getPostEmoteCounts', () => {
+  it('Aggregates emote counts per post in objects', async () => {
+    const postIDs = ['1', '2', '3'];
+    const dbData = [
+      { postID: '1', emoteID: 1, count: 5 },
+      { postID: '1', emoteID: 2, count: 1 },
+      { postID: '1', emoteID: 5, count: 2 },
+      { postID: '2', emoteID: 1, count: 3 },
+      { postID: '2', emoteID: 2, count: 1 },
+      { postID: '3', emoteID: 2, count: 4 },
+    ];
+    const expectedOutput = {
+      1: [
+        { emoteID: 1, count: 5 },
+        { emoteID: 2, count: 1 },
+        { emoteID: 5, count: 2 },
+      ],
+      2: [
+        { emoteID: 1, count: 3 },
+        { emoteID: 2, count: 1 },
+      ],
+      3: [{ emoteID: 2, count: 4 }],
+    };
+    const dbSpy = vi
+      .spyOn(emoteDB.getPostCumulative, 'run')
+      .mockResolvedValue(dbData);
+    const output = await emote.getPostEmoteCounts(postIDs);
+    expect(output).toMatchObject(expectedOutput);
+    expect(dbSpy.mock.calls[0][0]).toMatchObject({ postIDs });
+  });
+});
+
+describe('getCommentEmoteCounts', () => {
+  it('Aggregates emote counts per post in objects', async () => {
+    const commentIDs = ['1', '2', '3'];
+    const dbData = [
+      { commentID: '1', emoteID: 1, count: 5 },
+      { commentID: '1', emoteID: 2, count: 1 },
+      { commentID: '1', emoteID: 5, count: 2 },
+      { commentID: '2', emoteID: 1, count: 3 },
+      { commentID: '2', emoteID: 2, count: 1 },
+      { commentID: '3', emoteID: 2, count: 4 },
+    ];
+    const expectedOutput = {
+      1: [
+        { emoteID: 1, count: 5 },
+        { emoteID: 2, count: 1 },
+        { emoteID: 5, count: 2 },
+      ],
+      2: [
+        { emoteID: 1, count: 3 },
+        { emoteID: 2, count: 1 },
+      ],
+      3: [{ emoteID: 2, count: 4 }],
+    };
+    const dbSpy = vi
+      .spyOn(emoteDB.getCommentCumulative, 'run')
+      .mockResolvedValue(dbData);
+    const output = await emote.getCommentEmoteCounts(commentIDs);
+    expect(output).toMatchObject(expectedOutput);
+    expect(dbSpy.mock.calls[0][0]).toMatchObject({ commentIDs });
+  });
+});

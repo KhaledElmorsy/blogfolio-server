@@ -8,8 +8,39 @@ export function getPostEmotes(postIDs: string[], userID?: string) {
   return emoteDB.getPosts.run({ postIDs, userID }, pool);
 }
 
+export async function getPostEmoteCounts(postIDs: string[]) {
+  const counts = await emoteDB.getPostCumulative.run({ postIDs }, pool);
+  type PostEmoteCount = (typeof counts)[number];
+  const postCounts = counts.reduce(
+    (acc, { postID, emoteID, count }) => {
+      acc[postID] ??= [];
+      acc[postID].push({ emoteID, count });
+      return acc;
+    },
+    {} as Record<PostEmoteCount['postID'], { emoteID: number; count: number }[]>,
+  );
+  return postCounts;
+}
+
 export function getCommentEmotes(commentIDs: string[], userID?: string) {
   return emoteDB.getComments.run({ commentIDs, userID }, pool);
+}
+
+export async function getCommentEmoteCounts(commentIDs: string[]) {
+  const counts = await emoteDB.getCommentCumulative.run({ commentIDs }, pool);
+  type CommentEmoteCount = (typeof counts)[number];
+  const commentCounts = counts.reduce(
+    (acc, { commentID, emoteID, count }) => {
+      acc[commentID] ??= [];
+      acc[commentID].push({ emoteID, count });
+      return acc;
+    },
+    {} as Record<
+    CommentEmoteCount['commentID'],
+    { emoteID: number; count: number }[]
+    >,
+  );
+  return commentCounts;
 }
 
 export function addToPost({
