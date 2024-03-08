@@ -9,12 +9,12 @@ const router = Router();
 
 /* ================================= GET ==================================== */
 
+/** Get posts and, optionally, draft/hidden posts for the logged in user. */
+router.get('/me', authorize, Post.GetByUserID);
+
 router.get('/:id', Post.Get);
 
 router.get('/', Post.GetSearch);
-
-/** Get posts and, optionally, draft/hidden posts for the logged in user. */
-router.get('/', authorize, Post.GetByUserID);
 
 /* ================================= POST =================================== */
 
