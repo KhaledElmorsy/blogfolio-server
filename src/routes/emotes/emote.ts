@@ -16,7 +16,11 @@ router.post('/comment/', authorize, Emote.PostNewCommentEmote);
 
 router.post('/post/get', Emote.PostGetPostEmotes);
 
+router.post('/post/get/counts', Emote.PostGetPostEmoteCounts);
+
 router.post('/comment/get', Emote.PostGetPostEmotes);
+
+router.post('/comment/get/counts', Emote.PostGetCommentEmoteCounts);
 
 /* ================================= PUT ==================================== */
 
