@@ -175,6 +175,74 @@ describe('PostGetCommentEmotes', () => {
   });
 });
 
+describe('PostGetPostEmoteCounts', () => {
+  test('IDs dont exist: HTTP Error Not Found. Respond with missing IDs', async () => {
+    const missingIDs = ['fake', 'phoney'];
+    const realIDs = ['real', 'genuine'];
+    vi.spyOn(postService, 'findMissingIDs').mockResolvedValue(missingIDs);
+    const response = await Emote.PostGetPostEmoteCounts({
+      body: { postIDs: missingIDs.concat(realIDs) },
+    });
+    expect(response.status).toBe(ErrorCode.NotFound);
+    if (response.status === ErrorCode.NotFound) {
+      expect(response.body.errors[0]).toMatchObject({
+        ...errorIDs.Post.NotFound,
+        data: { ids: missingIDs },
+      });
+    }
+  });
+
+  test('IDs all exist: HTTP Success Ok. Respond with emote counts', async () => {
+    vi.spyOn(postService, 'findMissingIDs').mockResolvedValue([]);
+    const emoteCounts = {} as any;
+    const postIDs = ['1', '2'];
+    const serviceSpy = vi
+      .spyOn(emoteService, 'getPostEmoteCounts')
+      .mockResolvedValue(emoteCounts);
+    const response = await Emote.PostGetPostEmoteCounts({ body: { postIDs } });
+    expect(response.status).toBe(SuccessCode.Ok);
+    if (response.status === SuccessCode.Ok) {
+      expect(response.body).toBe(emoteCounts);
+    }
+    expect(serviceSpy).toHaveBeenCalledWith(postIDs);
+  });
+});
+
+describe('PostGetCommentEmoteCounts', () => {
+  test('IDs dont exist: HTTP Error Not Found. Respond with missing IDs', async () => {
+    const missingIDs = ['fake', 'phoney'];
+    const realIDs = ['real', 'genuine'];
+    vi.spyOn(commentService, 'findMissingIDs').mockResolvedValue(missingIDs);
+    const response = await Emote.PostGetCommentEmoteCounts({
+      body: { commentIDs: missingIDs.concat(realIDs) },
+    });
+    expect(response.status).toBe(ErrorCode.NotFound);
+    if (response.status === ErrorCode.NotFound) {
+      expect(response.body.errors[0]).toMatchObject({
+        ...errorIDs.Comment.NotFound,
+        data: { ids: missingIDs },
+      });
+    }
+  });
+
+  test('IDs all exist: HTTP Success Ok. Respond with emote counts', async () => {
+    vi.spyOn(commentService, 'findMissingIDs').mockResolvedValue([]);
+    const emoteCounts = {} as any;
+    const commentIDs = ['1', '2'];
+    const serviceSpy = vi
+      .spyOn(emoteService, 'getCommentEmoteCounts')
+      .mockResolvedValue(emoteCounts);
+    const response = await Emote.PostGetCommentEmoteCounts({
+      body: { commentIDs },
+    });
+    expect(response.status).toBe(SuccessCode.Ok);
+    if (response.status === SuccessCode.Ok) {
+      expect(response.body).toBe(emoteCounts);
+    }
+    expect(serviceSpy).toHaveBeenCalledWith(commentIDs);
+  });
+});
+
 describe('PostNewPostEmote', () => {
   test('Emote ID doesnt exist: HTTP Error Not found. Respond with emote ID', async () => {
     vi.spyOn(emoteService, 'checkEmoteExists').mockResolvedValue(false);

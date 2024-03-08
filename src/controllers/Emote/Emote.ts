@@ -71,6 +71,36 @@ export default createController('Emote', EmoteType.endpoints, (error) => ({
     return createResponse(codes.success.Ok, mappedResponse);
   },
 
+  async PostGetPostEmoteCounts(
+    { body: { postIDs } },
+    { createResponse, createError, codes },
+  ) {
+    const missingPostIDs = await Post.findMissingIDs(postIDs);
+    if (missingPostIDs.length) {
+      return createResponse(codes.error.NotFound, {
+        errors: [createError(error.Post.NotFound, { ids: missingPostIDs })],
+      });
+    }
+    const emoteCounts = await Emote.getPostEmoteCounts(postIDs);
+    return createResponse(codes.success.Ok, emoteCounts);
+  },
+
+  async PostGetCommentEmoteCounts(
+    { body: { commentIDs } },
+    { createResponse, createError, codes },
+  ) {
+    const missingCommentIDs = await Comment.findMissingIDs(commentIDs);
+    if (missingCommentIDs.length) {
+      return createResponse(codes.error.NotFound, {
+        errors: [
+          createError(error.Comment.NotFound, { ids: missingCommentIDs }),
+        ],
+      });
+    }
+    const emoteCounts = await Emote.getCommentEmoteCounts(commentIDs);
+    return createResponse(codes.success.Ok, emoteCounts);
+  },
+
   async PostNewPostEmote(
     { body: { emoteID, postID } },
     { createResponse, createError, codes },
