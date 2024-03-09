@@ -183,11 +183,8 @@ export default function createController<
 
         // Each parse issue is mapped to an error. Create an array of those errors
         // and respond.
-        res.json({
-          status: ErrorCode.BadRequest,
-          body: {
-            errors: mapZodError(requestParseResult.error),
-          },
+        res.status(ErrorCode.BadRequest).json({
+          errors: mapZodError(requestParseResult.error),
         });
         next();
         return;
