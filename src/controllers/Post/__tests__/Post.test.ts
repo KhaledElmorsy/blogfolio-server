@@ -26,7 +26,10 @@ describe('Get', () => {
   test('Post not found: HTTP Error Not Found. Returns ID.', async () => {
     vi.spyOn(postService, 'get').mockResolvedValue(undefined);
     const id = 'testID';
-    const response = await Post.Get({ params: { id } });
+    const response = await Post.Get(
+      { params: { id } },
+      { res: { locals: { userID: 'test' } } },
+    );
     expect(response.status).toBe(ErrorCode.NotFound);
     if (response.status === ErrorCode.NotFound) {
       expect(response.body.errors[0]).toMatchObject({
@@ -44,7 +47,10 @@ describe('Get', () => {
       visible: false,
     });
     const { id } = testPost;
-    const response = await Post.Get({ params: { id } });
+    const response = await Post.Get(
+      { params: { id } },
+      { res: { locals: { userID: 'test' } } },
+    );
     expect(response.status).toBe(ErrorCode.NotFound);
     if (response.status === ErrorCode.NotFound) {
       expect(response.body.errors[0]).toMatchObject({
@@ -54,10 +60,28 @@ describe('Get', () => {
     }
   });
 
+  test('Post written by logged user: HTTP Success Ok. Returns post', async () => {
+    const userID = 'testID';
+    const mockPost = { ...testPost, visible: false, userID };
+    vi.spyOn(postService, 'get').mockResolvedValue(mockPost);
+    const { id } = testPost;
+    const response = await Post.Get(
+      { params: { id } },
+      { res: { locals: { userID } } },
+    );
+    expect(response.status).toBe(SuccessCode.Ok);
+    if (response.status === SuccessCode.Ok) {
+      expect(response.body.post).toMatchObject(mockPost);
+    }
+  });
+
   test('Post Found and visible: HTTP Success Ok. Returns post', async () => {
     vi.spyOn(postService, 'get').mockResolvedValue(testPost);
     const { id } = testPost;
-    const response = await Post.Get({ params: { id } });
+    const response = await Post.Get(
+      { params: { id } },
+      { res: { locals: { userID: 'test' } } },
+    );
     expect(response.status).toBe(SuccessCode.Ok);
     if (response.status === SuccessCode.Ok) {
       expect(response.body.post).toMatchObject(testPost);

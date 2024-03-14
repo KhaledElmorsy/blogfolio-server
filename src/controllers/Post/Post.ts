@@ -3,10 +3,15 @@ import { Post as PostTypes } from '@blogfolio/types';
 import { createController } from '../util';
 
 export default createController('Post', PostTypes.endpoints, (error) => ({
-  async Get({ params: { id } }, { createResponse, createError, codes }) {
+  async Get(
+    { params: { id } },
+    { createResponse, createError, codes },
+    { res },
+  ) {
+    const { userID } = res.locals;
     const post = await Post.get(id);
     // Ensure that the post is public
-    if (post && post.visible) {
+    if (post && (post.visible || post.userID === userID)) {
       return createResponse(codes.success.Ok, { post });
     }
 
