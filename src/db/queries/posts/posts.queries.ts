@@ -138,6 +138,7 @@ export interface IInsertParams {
   summary?: string | null | void;
   title: string;
   userID: string;
+  visible?: boolean | null | void;
 }
 
 /** 'Insert' return type */
@@ -149,7 +150,7 @@ export interface IInsertQuery {
   result: IInsertResult;
 }
 
-const insertIR: any = {"usedParamSet":{"userID":true,"postID":true,"slug":true,"title":true,"summary":true,"body":true},"params":[{"name":"userID","required":true,"transform":{"type":"scalar"},"locs":[{"a":135,"b":142}]},{"name":"postID","required":true,"transform":{"type":"scalar"},"locs":[{"a":148,"b":155}]},{"name":"slug","required":false,"transform":{"type":"scalar"},"locs":[{"a":160,"b":164}]},{"name":"title","required":true,"transform":{"type":"scalar"},"locs":[{"a":169,"b":175}]},{"name":"summary","required":false,"transform":{"type":"scalar"},"locs":[{"a":180,"b":187}]},{"name":"body","required":true,"transform":{"type":"scalar"},"locs":[{"a":192,"b":197}]}],"statement":"INSERT INTO posts (\n  user_id,\n  post_uid,\n  slug,\n  title,\n  summary,\n  body\n) VALUES (\n  (SELECT user_id FROM users where user_uid = :userID!),\n  :postID!,\n  :slug,\n  :title!,\n  :summary,\n  :body!\n)"};
+const insertIR: any = {"usedParamSet":{"userID":true,"postID":true,"slug":true,"title":true,"summary":true,"body":true,"visible":true},"params":[{"name":"userID","required":true,"transform":{"type":"scalar"},"locs":[{"a":146,"b":153}]},{"name":"postID","required":true,"transform":{"type":"scalar"},"locs":[{"a":159,"b":166}]},{"name":"slug","required":false,"transform":{"type":"scalar"},"locs":[{"a":171,"b":175}]},{"name":"title","required":true,"transform":{"type":"scalar"},"locs":[{"a":180,"b":186}]},{"name":"summary","required":false,"transform":{"type":"scalar"},"locs":[{"a":191,"b":198}]},{"name":"body","required":true,"transform":{"type":"scalar"},"locs":[{"a":203,"b":208}]},{"name":"visible","required":false,"transform":{"type":"scalar"},"locs":[{"a":222,"b":229}]}],"statement":"INSERT INTO posts (\n  user_id,\n  post_uid,\n  slug,\n  title,\n  summary,\n  body,\n  visible\n) VALUES (\n  (SELECT user_id FROM users where user_uid = :userID!),\n  :postID!,\n  :slug,\n  :title!,\n  :summary,\n  :body!,\n  COALESCE(:visible, false)\n)"};
 
 /**
  * Query generated from SQL:
@@ -160,14 +161,16 @@ const insertIR: any = {"usedParamSet":{"userID":true,"postID":true,"slug":true,"
  *   slug,
  *   title,
  *   summary,
- *   body
+ *   body,
+ *   visible
  * ) VALUES (
  *   (SELECT user_id FROM users where user_uid = :userID!),
  *   :postID!,
  *   :slug,
  *   :title!,
  *   :summary,
- *   :body!
+ *   :body!,
+ *   COALESCE(:visible, false)
  * )
  * ```
  */

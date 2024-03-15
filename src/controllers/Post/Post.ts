@@ -87,7 +87,7 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
   },
 
   async Post(
-    { body: { body, title, slug, summary } },
+    { body: { body, title, slug, summary, visible } },
     { createResponse, createError, codes },
     { res },
   ) {
@@ -99,7 +99,7 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
       });
     }
     const postID = await Post.generateID();
-    await Post.create({ body, title, slug, summary, userID, postID });
+    await Post.create({ body, title, slug, summary, userID, postID, visible });
     return createResponse(codes.success.Created, { id: postID });
   },
 

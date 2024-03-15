@@ -45,14 +45,16 @@ INSERT INTO posts (
   slug,
   title,
   summary,
-  body
+  body,
+  visible
 ) VALUES (
   (SELECT user_id FROM users where user_uid = :userID!),
   :postID!,
   :slug,
   :title!,
   :summary,
-  :body!
+  :body!,
+  COALESCE(:visible, false)
 );
 
 /* @name update */
