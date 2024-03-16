@@ -125,7 +125,7 @@ export default createController('Post', PostTypes.endpoints, (error) => ({
       });
     }
 
-    if (slug) {
+    if (slug && slug !== post.slug) {
       const slugAvailable = await Post.checkSlug(userID, slug);
       if (!slugAvailable) {
         return createResponse(codes.error.Conflict, {
