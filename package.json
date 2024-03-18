@@ -44,7 +44,7 @@
     "vitest": "^0.34.1"
   },
   "dependencies": {
-    "@blogfolio/types": "^0.0.29",
+    "@blogfolio/types": "^0.0.31",
     "@pgtyped/runtime": "^2.1.0",
     "bcrypt": "^5.1.0",
     "compression": "^1.7.4",
