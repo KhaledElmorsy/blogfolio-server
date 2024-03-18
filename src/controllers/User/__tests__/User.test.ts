@@ -443,7 +443,7 @@ describe('GetMe', () => {
     }
     expect(querySpy).toHaveBeenCalledWith(
       { id: userID },
-      { fields: ['photoFull', 'photoSmall'] },
+      { fields: ['photoFull', 'photoSmall', 'bio', 'firstName', 'lastName'] },
     );
   });
 });

@@ -106,7 +106,7 @@ export default createController('User', endPoints, (errors) => ({
     const { userID } = res.locals as { userID: string };
     const [user] = await getUserList(
       { id: userID },
-      { fields: ['photoFull', 'photoSmall'] },
+      { fields: ['photoFull', 'photoSmall', 'bio', 'firstName', 'lastName'] },
     );
     return createResponse(codes.success.Ok, { user });
   },
